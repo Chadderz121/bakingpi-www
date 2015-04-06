@@ -1,0 +1,468 @@
+﻿<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml">
+<head>
+	<title>Lesson 1 OK01</title>
+	<link href="stylesheet.css" rel="Stylesheet" type="text/css" />
+	<script language="javascript" type="text/javascript" src="script.js"></script>
+</head>
+<body>
+	<div id="contentAll">
+		<div id="courseHead">
+			<h1>
+				Lesson 1 OK01</h1>
+		</div>
+		<div id="pageAll">
+			<div id="pageBody">
+				<p>
+					The OK01 lesson contains an explanation about how to get started and teaches how
+					to enable the 'OK' or 'ACT' <strong title="Light Emitting Diode">LED</strong> on the Raspberry
+					Pi board near the RCA and USB ports. This light was originally labelled OK but has been renamed to ACT on the revision
+					2 Raspberry Pi boards.
+				</p>
+				<div class="ucampas-toc">
+				</div>
+				<h2 id="gs">
+					1 Getting Started</h2>
+				<p>
+					I am assuming at this point that you have already visited the <a href="downloads.html">
+						Downloads</a> page, and got the necessary GNU Toolchain. Also on the downloads
+					page is a file called OS Template. Please download this and extract its contents
+					to a new directory.
+				</p>
+				<h2 id="beginning">
+					2 The Beginning</h2>
+				<div class="informationBox"><p>
+					The '.s' file extension is commonly used for all forms of assembly code, it is up
+					to us to remember this is ARMv6.</p></div>
+				<p>
+					Now that you have extracted the template, create a new file in the 'source' directory
+					called 'main.s'. This file will contain the code for this operating system. To be explicit, the folder structure should look like:</p>
+					<pre class="pseudoCodeBlock">build/
+   <em>(empty)</em>
+source/
+   main.s
+kernel.ld
+LICENSE
+Makefile</pre>
+				<p>
+					Open 'main.s' in a text editor so that we can begin typing assembly code. The Raspberry Pi
+					uses a variety of assembly code called ARMv6, so that is what we'll need to write
+					in.</p>
+				<p>
+					Copy in these first commands.</p>
+				<div class="armCodeBlock"><p>
+					.section .init<br />
+					.globl _start<br />
+					_start:<br />
+				</p></div>
+				<p>
+					As it happens, none of these actually do anything on the Raspberry Pi, these are
+					all instructions to the assembler. The assembler is the program that will translate
+					between assembly code that we understand, and binary machine code that the Raspberry
+					Pi understands. In Assembly Code, each line is a new command. The first line here
+					tells the Assembler<a class="noteLink" name="note1a" href="#note1" title="Note 1"><sup>[1]</sup></a>
+					where to put our code. The template I provided causes the code in the section called
+					<span class="armCodeInline">.init</span> to be put at the start of the output. This
+					is important, as we want to make sure we can control which code runs first. If we
+					don't do this, the code in the alphabetically first file name will run first! The
+					<span class="armCodeInline">.section</span> command simply tells the assembler which
+					section to put the code in, from this point until the next <span class="armCodeInline">
+						.section</span> or the end of the file.</p>
+				<div class="informationBox"><p>
+					In assembly code, you may skip lines, and put spaces before and after commands to
+					aid readability.</p></div>
+				<p>
+					The next two lines are there to stop a warning message and aren't all that important.<a
+						class="noteLink" href="#note2" name="note2a" title="Note 2"><sup>[2]</sup></a></p>
+				<h2 id="firstline">
+					3 The First Line</h2>
+				<p>
+					Now we're actually going to code something. In assembly code, the computer simply
+					goes through the code, doing each instruction in order, unless told otherwise. Each
+					instruction starts on a new line.</p>
+				<p>
+					Copy the following instruction.</p>
+				<div class="armCodeBlock"><p>
+					ldr r0,=0x20200000
+				</p></div>
+				<div class="commandBox"><p>
+					<span class="armCodeInline">ldr reg,=val</span> puts the number <span class="armCodeInline">
+						val</span> into the register named <span class="armCodeInline">reg</span>.</p></div>
+				<p>
+					That is our first command. It tells the processor to store the number 0x20200000
+					into the register r0. I shall need to answer two questions here, what is a register,
+					and how is 0x20200000 a number?</p>
+				<div class="informationBox"><p>
+					A single register can store any integer between 0 and 4,294,967,295 inclusive on
+					the Raspberry Pi, which might seem like a large amount of memory, but it is only
+					32 binary bits.
+				</p></div>
+				<p>
+					A register is a tiny piece of memory in the processor, which is where the processor
+					stores the numbers it is working on right now. There are quite a few of these, many
+					of which have a special meaning, which we will come to later. Importantly there
+					are 13 (named r0,r1,r2,...,r9,r10,r11,r12) which are called General Purpose, and
+					you can use them for whatever calculations you need to do. Since it's the first,
+					I've used r0 in this example, but I could very well have used any of the others.
+					As long as you're consistent, it doesn't matter.</p>
+				<p>
+					0x20200000 is indeed a number. However it is written in Hexadecimal notation. To
+					learn more about hexadecimal expand the box below:</p>
+				<div class="expandableHeader" onclick="return ExpandToggle('hex')">
+					<p>
+						<a class="icon-more">Hexadecimal explained</a></p>
+				</div>
+				<div id="hex" class="expandable">
+					<p>
+						Hexadecimal is an alternate system for writing numbers. You may only be aware of
+						the decimal system for writing numbers in which we have 10 digits: 0,1,2,3,4,5,6,7,8
+						and 9. Hexadecimal is a system with 16 digits: 0,1,2,3,4,5,6,7,8,9,a,b,c,d,e and
+						f.</p>
+					<img src="images/hexadecimal1.png" alt="567 is 5 hundreds, 6 tens and 7 units."
+						class="sideDiagram" />
+					<p>
+						You may recall being taught how decimal numbers work in terms of place value. We
+						say that the rightmost digits is the 'units' digits, the next one left is the 'tens'
+						digit, the next is the 'hundreds' digit, and so on. What this actually meant is,
+						the number is 100 &times; the value in the 'hundreds' digit, plus 10 &times; the
+						value in the 'tens' digit, plus 1 &times; the value in the units digit.</p>
+					<img src="images/hexadecimal2.png" alt="567 is 5x10^2+6x10^1+7x10^0" class="sideDiagram" />
+					<p>
+						More mathematically, we can now spot the pattern and say that the rightmost digit
+						is the 10<sup>0</sup>=1s digit, the next left is the 10<sup>1</sup>=10s digit, the
+						next is 10<sup>2</sup>=100s digit, and so on. We have all agreed on the system that
+						0 is the lowest digit, 1 is the next and so on. But what if we used a different
+						number instead of 10 in these powers? Hexadecimal is just the system in which we
+						use 16 instead.</p>
+					<img src="images/hexadecimal3.png" alt="567 = 5x10^2+6x10^1+7x10^0 = 2x16^2+3x16^1+7x16^0"
+						class="sideDiagram" />
+					<p>
+						The mathematics to the right shows that the number 567 in decimal is equivalent
+						to the number 237 in hexadecimal. Often when we need to be clear about what system
+						we're using to write numbers in we put <sub>10</sub> for decimal and <sub>16</sub>
+						for hexadecimal. Since it's difficult to write small numbers in assembly code, we
+						use 0x instead to represent a number in hexadecimal notation. So 0x237 means 237<sub>16</sub>.</p>
+					<p>
+						So where do a,b,c,d,e and f come in? Well, in order to be able to write every number
+						in hexadecimal, we need extra digits. For example 9<sub>16</sub> = 9&times;16<sup>0</sup>
+						= 9<sub>10</sub>, but 10<sub>16</sub> = 1&times;16<sup>1</sup> + 1&times;16<sup>0</sup>
+						= 16<sub>10</sub>. So if we just used 0,1,2,3,4,5,6,7,8 and 9 we would not be able
+						to write 10<sub>10</sub>, 11<sub>10</sub>, 12<sub>10</sub>, 13<sub>10</sub>, 14<sub>10</sub>,
+						15<sub>10</sub>. So we introduce 6 new digits such that a<sub>16</sub> = 10<sub>10</sub>,
+						b<sub>16</sub> = 11<sub>10</sub>, c<sub>16</sub> = 12<sub>10</sub>, d<sub>16</sub>
+						= 13<sub>10</sub>, e<sub>16</sub> = 14<sub>10</sub>, f<sub>16</sub> = 15<sub>10</sub></p>
+					<p>
+						So, we now have another system for writing numbers. But why did we bother? Well,
+						it turns out that since computers always work in binary, hexadecimal notation is
+						very useful because every hexadecimal digit is exactly four binary digits long.
+						This has the nice side effect that a lot of computer numbers are round numbers in
+						hexadecimal, even though they're not in decimal. For example, in the assembly code
+						just above I used the number 20200000<sub>16</sub>. If I had chose to write this
+						in decimal it would have been 538968064<sub>10</sub>, which is much less memorable.
+					</p>
+					<p>
+						To convert numbers from decimal to hexadecimal I find the following method easiest:</p>
+					<img src="images/hexadecimal4.png" alt="Conversion example" class="sideDiagram" />
+					<ol>
+						<li>Start with the decimal number, say 567.</li>
+						<li>Divide by 16 and calculate the remainder. For example 567 &divide; 16 = 35 remainder
+							7.</li>
+						<li>The remainder is the last digit of the answer in hexadecimal, in the example this
+							is 7.</li>
+						<li>Repeat steps 2 and 3 again with the result of the last division until the reuslt
+							is 0. For example 35 &divide; 16 = 2 remainder 3, so 3 is the next digit of the
+							answer. 2 &divide; 16 = 0 remainder 2, so 2 is the next digit of the answer.</li>
+						<li>Once the result of the division is 0, you can stop. The answer is just the remainders
+							in the reverse order to which you got them, so 567<sub>10</sub> = 237<sub>16</sub>.</li></ol>
+					<p>
+						To convert hexadecimal numbers back to decimal, it is easiest to expand out the
+						number, so 237<sub>16</sub> = 2&times;16<sup>2</sup> + 3&times;16<sup>1</sup> +7
+						&times;16<sup>0</sup> = 2&times;256 + 3&times;16 + 7&times;1 = 512 + 48 + 7 = 567.</p>
+				</div>
+				<p>
+					So our first command is to put the number 20200000<sub>16</sub> into r0. That doesn't
+					sound like it would be much use, but it is. In computers, there are an awful lot
+					of chunks of memory and devices. In order to access them all, we give each one an
+					address. Much like a postal address or a web address this is just a means of identifying
+					the location of the device or chunks of memory we want. Addresses in computers are
+					just numbers, and so the number 20200000<sub>16</sub> happens to be the address
+					of the GPIO controller. This is just a design decision taken by the manufacturers,
+					they could have used any other address (providing it didn't conflict with anything
+					else). I know this address only because I looked it up in a manual<a class="noteLink"
+						name="note3a" href="#note3" title="Note 3"><sup>[3]</sup></a>, there is no particular
+					system to the addresses (other than that they are all large round numbers in hexadecimal).</p>
+				<h2 id="enablingoutput">
+					4 Enabling Output</h2>
+				<img src="images/gpioController.png" alt="A diagram showing key parts of the GPIO controller."
+					class="marginDiagram" />
+				<p>
+					Having read the manual, I know we're going to need to send two messages to the GPIO
+					controller. We need to talk its language, but if we do, it will obligingly do what
+					we want and turn on the OK LED. Fortunately, it is such a simple chip, that it only
+					needs a few numbers in order to understand what to do.</p>
+				<div class="armCodeBlock"><p>
+					mov r1,#1<br />
+					lsl r1,#18<br />
+					str r1,[r0,#4]<br />
+				</p></div>
+				<div class="commandBox"><p>
+					<span class="armCodeInline">mov reg,#val</span> puts the number <span class="armCodeInline">
+						val</span> into the register named <span class="armCodeInline">reg</span>.</p></div>
+				<div class="commandBox"><p>
+					<span class="armCodeInline">lsl reg,#val</span> shifts the binary representation
+					of the number in <span class="armCodeInline">reg</span> by <span class="armCodeInline">
+						val</span> places to the left.</p></div>
+				<div class="commandBox"><p>
+					<span class="armCodeInline">str reg,[dest,#val]</span> stores the number in <span
+						class="armCodeInline">reg</span> at the address given by <span class="armCodeInline">
+							dest</span> + <span class="armCodeInline">val</span>.</p></div>
+				<p>
+					These commands enable output to the 16th GPIO pin. First we get a necessary value
+					in r1, then send it to the GPIO controller. Since the first two instructions are
+					just trying to get a value into r1, we could use another <span class="armCodeInline">
+						ldr</span> command as before, but it will be useful to us later to be able to
+					set any given GPIO pin, so it is better to deduce the value from a formula than
+					write it straight in. The OK LED is wired to the 16th GPIO pin, and so we need to
+					send a command to enable the 16th pin.</p>
+				<p>
+					The value in r1 is needed to enable the LED pin. The first line puts the number
+					1<sub>10</sub> into r1. The <span class="armCodeInline">mov</span> command is faster
+					than the <span class="armCodeInline">ldr</span> command, because it does not involve
+					a memory interaction, whereas <span class="armCodeInline">ldr</span> loads the value
+					we want to put into the register from memory. However, <span class="armCodeInline">mov</span>
+					can only be used to load certain values<a class="noteLink" name="note4a" href="#note4"
+						title="Note 4"><sup>[4]</sup></a>. In ARM assembly code, almost every instruction
+					begins with a three letter code. This is called the mnemonic, and is supposed to
+					hint at what the operation does. <span class="armCodeInline">mov</span> is short
+					for move and <span class="armCodeInline">ldr</span> is short for load register.
+					<span class="armCodeInline">mov</span> moves the second argument <span class="armCodeInline">
+						#1</span> into the first <span class="armCodeInline">r1</span>. In general,
+					<span class="armCodeInline">#</span> must be used to denote numbers, but we have
+					already seen a counterexample to this.
+				</p>
+				<p>
+					The second instruction is <span class="armCodeInline">lsl</span> or logical shift
+					left. This means shift the binary representation for the first argument left by
+					the second argument. In this case this will shift the binary representation of 1<sub>10</sub>
+					(which is 1<sub>2</sub>) left by 18 places (making it 1000000000000000000<sub>2</sub>=262144<sub>10</sub>).</p>
+				<p>
+					If you are unfamiliar with binary, expand the box below:</p>
+				<div class="expandableHeader" onclick="return ExpandToggle('binary')">
+					<p>
+						<a class="icon-more">Binary explained</a></p>
+				</div>
+				<div id="binary" class="expandable">
+					<p>
+						Just like hexadecimal binary is another way of writing numbers. In binary we only
+						have 2 digits, 0 and 1. This is useful for computers because we can implement this
+						in a circuit by saying that electricity flowing through the circuit means 1, and
+						not means 0. This is how computers actually work and do maths. Despite only having
+						2 digits binary can still be used to represent every number, it just takes a lot
+						longer.</p>
+					<img src="images/binary1.png" alt="567 in decimal = 1000110111 in binary" class="sideDiagram" />
+					<p>
+						The image shows the binary representation of the number 567<sub>10</sub> which is
+						1000110111<sub>2</sub>. We use <sub>2</sub> to denote numbers written in binary.</p>
+					<p>
+						One of the quirks of binary that we make heavy use of in assembly code is the ease
+						by which numbers can be multiplied or divided by powers of 2 (e.g. 1,2,4,8,16).
+						Normally multiplications and divisions are tricky operations, however these special
+						cases are very easy, and so are very important.</p>
+					<img src="images/binary2.png" alt="13*4 = 52, 1101*100=110100" class="sideDiagram" />
+					<p>
+						Shifting a binary number left by <strong>n</strong> places is the same as multiplying
+						the number by 2<sup><strong>n</strong></sup>. So, if we want to multiply by 4, we
+						just shift the number left 2 places. If we want to multiply by 256 we could shift
+						it left by 8 places. If we wanted to multiply by a number like 12, we could instead
+						multiply it by 8, then separately by 4 and add the results (N &times; 12 = N &times;
+						(8 + 4) = N &times; 8 + N &times; 4).</p>
+					<img src="images/binary3.png" alt="53/16 = 3, 110100/10000=11" class="sideDiagram" />
+					<p>
+						Shifting a binary number right by <strong>n</strong> places is the same as dividing
+						the number by 2<sup><strong>n</strong></sup>. The remainder of the division is the
+						bits that were lost when shifted right. Unfortunately dividing by a binary number
+						that is not an exact power of 2 is very difficult, and will be covered in <a href="screen04.html">
+							Lesson 9: Screen04</a>.</p>
+					<img src="images/binary4.png" alt="Binary Terminology" class="sideDiagram" />
+					<p>
+						This diagram shows common terminology used with binary. A bit is a single binary
+						digit. A nibble is 4 binary bits. A byte is 2 nibbles, or 8 bits. A half is half
+						the size of a word, 2 bytes in this case. A word refers to the size of the registers
+						on a processor, and so on the Raspberry Pi this is 4 bytes. The convention is to
+						number the most significant bit of a word 31, and the least significant bit as 0.
+						The top, or high bits refer to the most significant bits, and the low or bottom
+						bits refer to the least significant. A kilobyte (KB) is 1000 bytes, a megabyte is
+						1000 KB. There is some confusion as to whether this should be 1000 or 1024 (a round
+						number in binary). As such, the new international standard is that a KB is 1000
+						bytes, and a Kibibyte (KiB) is 1024 bytes. A Kb is 1000 bits, and a Kib is 1024
+						bits.</p>
+					<p>
+						The Raspberry Pi is little endian by default, meaning that loading a byte from an
+						address you just wrote a word to will load the lowest byte of the word.</p>
+				</div>
+				<p>
+					Once again, I only know that we need this value from reading the manual<a class="noteLink"
+						name="note3b" href="#note3" title="Note 3"><sup>[3]</sup></a>. The manual says
+					that there is a set of 24 bytes in the GPIO controller, which determine the settings
+					of the GPIO pin. The first 4 relate to the first 10 GPIO pins, the second 4 relate
+					to the next 10 and so on. There are 54 GPIO pins, so we need 6 sets of 4 bytes,
+					which is 24 bytes in total. Within each 4 byte section, every 3 bits relates to
+					a particular GPIO pin. Since we want the 16th GPIO pin, we need the second set of
+					4 bytes because we're dealing with pins 10-19, and we need the 6th set of 3 bits,
+					which is where the number 18 (6&times;3) comes from in the code above.</p>
+				<p>
+					Finally the <span class="armCodeInline">str</span> 'store register' command stores
+					the value in the first argument, <span class="armCodeInline">r1</span> into the
+					address computed from the expression afterwards. The expression can be a register,
+					in this case <span class="armCodeInline">r0</span>, which we know to be the GPIO
+					controller address, and another value to add to it, in this case <span class="armCodeInline">
+						#4</span>. This means we add 4 to the GPIO controller address and write the
+					value in <span class="armCodeInline">r1</span> to that location. This happens to
+					be the location of the second set of 4 bytes that I mentioned before, and so we
+					send our first message to the GPIO controller, telling it to ready the 16th GPIO
+					pin for output.</p>
+				<h2 id="signlife">
+					5 A Sign Of Life</h2>
+				<p>
+					Now that the LED is ready to turn on, we need to actually turn it on. This means
+					sending a message to the GPIO controller to turn pin 16 off. Yes, <em>turn it off</em>.
+					The chip manufacturers decided it made more sense<a class="noteLink" name="note5a"
+						href="#note5" title="Note 5"><sup>[5]</sup></a> to have the LED turn on when
+					the GPIO pin is off. Hardware engineers often seem to take these sorts of decisions,
+					seemingly just to keep OS Developers on their toes. Consider yourself warned.</p>
+				<div class="armCodeBlock"><p>
+					mov r1,#1<br />
+					lsl r1,#16<br />
+					str r1,[r0,#40]<br />
+				</p></div>
+				<p>
+					Hopefully you should recognise all of the above commands, if not their values. The
+					first puts a 1 into <span class="armCodeInline">r1</span> as before. The second
+					shifts the binary representation of this 1 left by 16 places. Since we want to turn
+					pin 16 off, we need to have a 1 in the 16th bit of this next message (other values
+					would work for other pins). Finally we write it out to the address which is 40<sub>10</sub>
+					added to the GPIO controller address, which happens to be the address to write to
+					turn a pin off (28 would turn the pin on).</p>
+				<h2 id="happy">
+					6 Happily Ever After</h2>
+				<p>
+					It might be tempting to finish now, but unfortunately the processor doesn't know
+					we're done. In actuality, the processor never will stop. As long as it has power,
+					it continues working. Thus, we need to give it a task to do forever more, or the
+					Raspberry Pi will crash (not much of a problem in this example, the light is already
+					on).</p>
+				<div class="armCodeBlock"><p>
+					loop$:
+					<br />
+					b loop$<br />
+					<br />
+				</p></div>
+				<div class="commandBox"><p>
+					<span class="armCodeInline">name:</span> labels the next line <span class="armCodeInline">
+						name</span>.</p></div>
+				<div class="commandBox"><p>
+					<span class="armCodeInline">b label</span> causes the next line to be executed to
+					be <span class="armCodeInline">label</span>.</p></div>
+				<p>
+					The first line here is not a command, but a label. It names the next line <span class="armCodeInline">
+						loop$</span>. This means we can now refer to the line by name. This is called
+					a label. Labels get discarded when the code is turned into binary, but they're useful
+					for our benefit for referring to lines by name, not number (address). By convention
+					we use a <span class="armCodeInline">$</span> for labels which are only important
+					to the code in this block of code, to let others know they're not important to the
+					overall program. The <span class="armCodeInline">b</span> (branch) command causes
+					the next line to be executed to be the one at the label specified, rather than the
+					one after it. Therefore, the next line to be executed will be this <span class="armCodeInline">
+						b</span>, which will cause it to be executed again, and so on forever. Thus
+					the processor is stuck in a nice infinite loop until it is switched off safely.</p>
+				<p>
+					The new line at the end of the block is intentional. The GNU toolchain expects all
+					assembly code files to end in an empty line, so that it is sure you were really
+					finished, and the file hasn't been cut off. If you don't put one, you get an annoying
+					warning when the assembler runs.</p>
+				<h2 id="pitime">
+					7 Pi Time</h2>
+				<p>
+					So we've written the code, now to get it onto the pi. Open a terminal on your computer
+					and change the current working directory to the parent directory of the source directory.
+					Type <span class="shellCodeInline">make</span> and then press enter. If any errors
+					occur, please refer to the troubleshooting section. If not, you will have generated
+					three files. kernel.img is the compiled image of your operating system. kernel.list
+					is a listing of the assembly code you wrote, as it was actually generated. This
+					is useful to check that things were generated correctly in future. The kernel.map
+					file contains a map of where all the labels ended up, which can be useful for chasing
+					around values.
+				</p>
+				<p>
+					To install your operating system, first of all get a Raspberry PI SD card which
+					has an operating system installed already. If you browse the files in the SD card,
+					you should see one called kernel.img. Rename this file to something else, such as
+					kernel_linux.img. Then, copy the file kernel.img that <span class="shellCodeInline">
+						make</span> generated onto the SD Card. You've just replaced the existing operating
+					system with your own. To switch back, simply delete your kernel.img file, and rename
+					the other one back to kernel.img. I find it is always helpful to keep a backup of
+					you original Raspberry Pi operating system, in case you need it again.</p>
+				<p>
+					Put the SD card into a Raspberry Pi and turn it on. The OK LED should turn on. If
+					not please see the troubleshooting page. If so, congratulations, you just wrote
+					your first operating system. See <a href="ok02.html">Lesson 2: OK02</a> for a guide
+					to making the LED flash on and off.</p>
+			</div>
+			<div id="pageFooter">
+				<hr />
+				<ol>
+					<li><a name="note1" /><sup>[1]<a class="noteBackLink" href="#note1a">^</a></sup> OK,
+						I'm lying it tells the linker, which is another program used to link several assembled
+						files together. It doesn't really matter.</li>
+					<li><a name="note2" /><sup>[2]<a class="noteBackLink" href="#note2a">^</a></sup> Clearly
+						they're important to you. Since the GNU toolchain is mainly used for creating programs,
+						it expects there to be an entry point labelled <span class="armCodeInline">_start</span>.
+						As we're making an operating system, the <span class="armCodeInline">_start</span>
+						is always whatever comes first, which we set up with the <span class="armCodeInline">
+							.section .init</span> command. However, if we don't say where the entry point
+						is, the toolchain gets upset. Thus, the first line says that we are going to define
+						a symbol called <span class="armCodeInline">_start</span> for all to see (globally),
+						and the second line says to make the symbol <span class="armCodeInline">_start</span>
+						the address of the next line. We will come onto addresses shortly.</li>
+					<li><a name="note3" /><sup>[3]<a class="noteBackLink" href="#note3a">^</a><a class="noteBackLink"
+						href="#note3b">^</a></sup> This tutorial is designed to spare you the pain of reading
+						it, but, if you must, it can be found here <a class="icon-pdf" href="downloads/SoC-Peripherals.pdf"
+							title="Broadcom BCM2835 ARM Peripherals">SoC-Peripherals.pdf</a>. For added
+							confusion, the manual uses a different addressing system. An address listed as
+							0x7E200000 would be 0x20200000 in our OS.</li>
+					<li><a name="note4" /><sup>[4]<a class="noteBackLink" href="#note4a">^</a></sup> Only
+						values which have a binary representation which only has 1s in the first 8 bits
+						of the representation. In other words, 8 1s or 0s followed by only 0s.</li>
+					<li><a name="note5" /><sup>[5]<a class="noteBackLink" href="#note5a">^</a></sup> A hardware
+						engineer was kind enough to explain this to me as follows:
+						<p>
+							The reason is that modern chips are made of a technology called CMOS, which stands
+							for Complementary Metal Oxide Semiconductor. The Complementary part means each signal
+							is connected to two transistors, one made of material called N-type semiconductor
+							which is used to pull it to a low voltage and another made of P-type material to
+							pull it to a high voltage. Only one transistor of the pair turns on at any time,
+							otherwise we'd get a short circuit. P-type isn't as conductive as N-type, which
+							means the P-type transistor has to be about 3 times as big to provide the same current.
+							This is why LEDs are often wired to turn on by pulling them low, because the N-type
+							is stronger at pulling low than the P-type is in pulling high.
+						</p>
+						<p>
+							There's another reason. Back in the 1970s chips were made out of entirely out of
+							N-type material ('NMOS'), with the P-type replaced by a resistor. That means that
+							when a signal is pulled low the chip is consuming power (and getting hot) even while
+							it isn't doing anything. Your phone getting hot and flattening the battery when
+							it's in your pocket doing nothing wouldn't be good. So signals were designed to
+							be 'active low' so that they're high when inactive and so don't take any power.
+							Even though we don't use NMOS any more, it's still often quicker to pull a signal
+							low with the N-type than to pull it high with the P-type. Often a signal that's
+							'active low' is marked with a bar over the top of the name, or written as SIGNAL_n
+							or /SIGNAL. But it can still be confusing, even for hardware engineers!
+						</p>
+					</li>
+				</ol>
+				<p><a rel="license" href="http://creativecommons.org/licenses/by-sa/3.0/deed.en_GB"><img alt="Creative Commons Licence" style="border-width:0" src="http://i.creativecommons.org/l/by-sa/3.0/88x31.png" /></a><br /><span xmlns:dct="http://purl.org/dc/terms/" property="dct:title">Baking Pi: Operating Systems Development</span> by <span xmlns:cc="http://creativecommons.org/ns#" property="cc:attributionName">Alex Chadwick</span> is licensed under a <a rel="license" href="http://creativecommons.org/licenses/by-sa/3.0/deed.en_GB">Creative Commons Attribution-ShareAlike 3.0 Unported License</a>.</p>
+			</div>
+		</div>
+	</div>
+</body>
+</html>

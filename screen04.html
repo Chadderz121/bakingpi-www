@@ -1,0 +1,1040 @@
+﻿<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml">
+<head>
+	<title>Lesson 9 Screen04</title>
+	<link href="stylesheet.css" rel="Stylesheet" type="text/css" />
+	<script language="javascript" type="text/javascript" src="script.js"></script>
+</head>
+<body>
+	<div id="contentAll">
+		<div id="courseHead">
+			<h1>
+				Lesson 9 Screen04</h1>
+		</div>
+		<div id="pageAll">
+			<div id="pageBody">
+				<p>
+					The Screen04 lesson builds on Screen03, by teaching how to manipulate text. It is
+					assumed you have the code for the <a href="screen03.html">Lesson 8: Screen03</a>
+					operating system as a basis.</p>
+				<div class="ucampas-toc">
+				</div>
+				<h2 id="stringmanipulation">
+					1 String Manipulation</h2>
+				<div class="informationBox"><p>Variadic functions look much less intuitive in assembly code. Nevertheless,
+				they are useful and powerful concepts.</p></div>
+				<p>
+					Being able to draw text is lovely, but unfortunately at the moment you can only
+					draw strings which are already prepared. This is fine for displaying something like
+					the command line, but ideally we would like to be able to display and text we so
+					desire. As per usual, if we put the effort in and make an excellent function that
+					does all the string manipulation we could ever want, we get much easier code later
+					on in return. Once such complicated function in C programming is sprintf. This function
+					generates a string based on a description given as another string and additional
+					arguments. What is interesting about this function is that it is variadic. This
+					means that it takes a variable number of parameters. The number of parameters depends
+					on the exact format string, and so cannot be determined in advance.</p>
+				<p>
+					The full function has many options, and I list a few here. I've highlighted the
+					ones which we will implement in this tutorial, though you can try to implement more.</p>
+				<p>
+					The function works by reading the format string, and then interpreting it using
+					the table below. Once an argument is used, it is not considered again. The return
+					value of the function is the number of characters written. If the method fails,
+					a negative number is returned.</p>
+				<table>
+					<caption>
+						Table 1.1 sprintf formatting rules</caption>
+					<thead>
+						<tr>
+							<th>
+								Sequence
+							</th>
+							<th>
+								Meaning
+							</th>
+						</tr>
+					</thead>
+					<tbody>
+						<tr>
+							<td class="cellBlue">
+								<em>Any character except %</em>
+							</td>
+							<td>
+								Copies the character to the output.
+							</td>
+						</tr>
+						<tr>
+							<td class="cellBlue">
+								%%
+							</td>
+							<td>
+								Writes a % character to the output.
+							</td>
+						</tr>
+						<tr>
+							<td class="cellBlue">
+								%c
+							</td>
+							<td>
+								Writes the next argument as a character.
+							</td>
+						</tr>
+						<tr>
+							<td class="cellBlue">
+								%d <em>or</em> %i
+							</td>
+							<td>
+								Writes the next argument as a base 10 signed integer.
+							</td>
+						</tr>
+						<tr>
+							<td>
+								%e
+							</td>
+							<td>
+								Writes the next argument in scientific notation using e<strong>N</strong> to mean
+								&times;10<sup><strong>N</strong></sup>.
+							</td>
+						</tr>
+						<tr>
+							<td>
+								%E
+							</td>
+							<td>
+								Writes the next argument in scientific notation using E<strong>N</strong> to mean
+								&times;10<sup><strong>N</strong></sup>.
+							</td>
+						</tr>
+						<tr>
+							<td>
+								%f
+							</td>
+							<td>
+								Writes the next argument as a decimal IEEE 754 floating point number.
+							</td>
+						</tr>
+						<tr>
+							<td>
+								%g
+							</td>
+							<td>
+								Same as the shorter of %e and %f.
+							</td>
+						</tr>
+						<tr>
+							<td>
+								%G
+							</td>
+							<td>
+								Same as the shorter of %E and %f.
+							</td>
+						</tr>
+						<tr>
+							<td class="cellBlue">
+								%o
+							</td>
+							<td>
+								Writes the next argument as a base 8 unsigned integer.
+							</td>
+						</tr>
+						<tr>
+							<td class="cellBlue">
+								%s
+							</td>
+							<td>
+								Writes the next argument as if it were a pointer to a null terminated string.
+							</td>
+						</tr>
+						<tr>
+							<td class="cellBlue">
+								%u
+							</td>
+							<td>
+								Writes the next argument as a base 10 unsigned integer.
+							</td>
+						</tr>
+						<tr>
+							<td class="cellBlue">
+								%x
+							</td>
+							<td>
+								Writes the next argument as a base 16 unsigned integer, with lowercase a,b,c,d,e
+								and f.
+							</td>
+						</tr>
+						<tr>
+							<td>
+								%X
+							</td>
+							<td>
+								Writes the next argument as a base 16 unsigned integer, with uppercase A,B,C,D,E
+								and F.
+							</td>
+						</tr>
+						<tr>
+							<td>
+								%p
+							</td>
+							<td>
+								Writes the next argument as a pointer address.
+							</td>
+						</tr>
+						<tr>
+							<td class="cellBlue">
+								%n
+							</td>
+							<td>
+								Writes nothing. Copies instead the number of characters written so far to the location
+								addressed by the next argument.
+							</td>
+						</tr>
+					</tbody>
+				</table>
+				<p>
+					Further to the above, many additional tweaks exist to the sequences, such as specifying
+					minimum length, signs, etc. More information can be found at <a href="http://www.cplusplus.com/reference/clibrary/cstdio/sprintf/">
+						sprintf - C++ Reference</a>.</p>
+				<p>
+					Here are a few examples of calls to the method and their results to illustrate its
+					use.</p>
+				<table>
+					<caption>
+						Table 1.2 sprintf example calls</caption>
+					<thead>
+						<tr>
+							<th>
+								Format String
+							</th>
+							<th>
+								Arguments
+							</th>
+							<th>
+								Result
+							</th>
+						</tr>
+					</thead>
+					<tbody>
+						<tr>
+							<td>
+								"%d"
+							</td>
+							<td>
+								13
+							</td>
+							<td>
+								"13"
+							</td>
+						</tr>
+						<tr>
+							<td>
+								"+%d degrees"
+							</td>
+							<td>
+								12
+							</td>
+							<td>
+								"+12 degrees"
+							</td>
+						</tr>
+						<tr>
+							<td>
+								"+%x degrees"
+							</td>
+							<td>
+								24
+							</td>
+							<td>
+								"+1c degrees"
+							</td>
+						</tr>
+						<tr>
+							<td>
+								"'%c' = 0%o"
+							</td>
+							<td>
+								65, 65
+							</td>
+							<td>
+								"'A' = 0101"
+							</td>
+						</tr>
+						<tr>
+							<td>
+								"%d * %d%% = %d"
+							</td>
+							<td>
+								200, 40, 80
+							</td>
+							<td>
+								"200 * 40% = 80"
+							</td>
+						</tr>
+						<tr>
+							<td>
+								"+%d degrees"
+							</td>
+							<td>
+								-5
+							</td>
+							<td>
+								"+-5 degrees"
+							</td>
+						</tr>
+						<tr>
+							<td>
+								"+%u degrees"
+							</td>
+							<td>
+								-5
+							</td>
+							<td>
+								"+4294967291 degrees"
+							</td>
+						</tr>
+					</tbody>
+				</table>
+				<p>
+					Hopefully you can already begin to see the usefulness of the function. It does take
+					a fair amount of work to program, but our reward is a very general function we can
+					use for all sorts of purposes.</p>
+				<h2 id="division">
+					2 Division</h2>
+				<div class="informationBox"><p>Division is the slowest and most complicated of the basic
+				mathematical operators. It is not implemented directly in ARM assembly code because it takes so
+				long to deduce the answer, and so isn't a 'simple' operation.</p></div>
+				<p>
+					While this function does look very powerful, it also looks very complicated. The
+					easiest way to deal with its many cases is probably to write functions to deal with
+					some common tasks it has. What would be useful would be a function to generate the
+					string for a signed and an unsigned number in any base. So, how can we go about
+					doing that? Try to devise an algorithm quickly before reading on.</p>
+				<p>
+					The easiest way is probably the exact way I mentioned in <a href="ok01.html">Lesson 1:
+						OK01</a>, which is the division remainder method. The idea is the following:</p>
+				<ol>
+					<li>Divide the current value by the base you're working in.</li>
+					<li>Store the remainder.</li>
+					<li>If the new value is not 0, go to 1.</li>
+					<li>Reverse the order of the remainders. This is the answer.</li></ol>
+				<p>
+					For example:</p>
+				<table>
+					<caption>
+						Table 2.1 Example base 2 conversion</caption>
+					<thead>
+						<tr>
+							<th>
+								Value
+							</th>
+							<th>
+								New Value
+							</th>
+							<th>
+								Remainder
+							</th>
+						</tr>
+					</thead>
+					<tbody>
+						<tr>
+							<td>
+								137
+							</td>
+							<td>
+								68
+							</td>
+							<td>
+								1
+							</td>
+						</tr>
+						<tr>
+							<td>
+								68
+							</td>
+							<td>
+								34
+							</td>
+							<td>
+								0
+							</td>
+						</tr>
+						<tr>
+							<td>
+								34
+							</td>
+							<td>
+								17
+							</td>
+							<td>
+								0
+							</td>
+						</tr>
+						<tr>
+							<td>
+								17
+							</td>
+							<td>
+								8
+							</td>
+							<td>
+								1
+							</td>
+						</tr>
+						<tr>
+							<td>
+								8
+							</td>
+							<td>
+								4
+							</td>
+							<td>
+								0
+							</td>
+						</tr>
+						<tr>
+							<td>
+								4
+							</td>
+							<td>
+								2
+							</td>
+							<td>
+								0
+							</td>
+						</tr>
+						<tr>
+							<td>
+								2
+							</td>
+							<td>
+								1
+							</td>
+							<td>
+								0
+							</td>
+						</tr>
+						<tr>
+							<td>
+								1
+							</td>
+							<td>
+								0
+							</td>
+							<td>
+								1
+							</td>
+						</tr>
+					</tbody>
+				</table>
+				<p>
+					So the answer is 10001001<sub>2</sub></p>
+				<p>
+					The unfortunate part about this procedure is that it unavoidably uses division.
+					Therefore, we must first contemplate division in binary.</p>
+				<p>
+					For a refresher on long division expand the box below.</p>
+				<div class="expandableHeader" onclick="return ExpandToggle('longdiv')"><p><a class="icon-more">Long division explained</a></p></div>
+				<div id="longdiv" class="expandable">
+					<p>
+						Let's suppose we wish to divide 4135 by 17.</p>
+					<pre>   <span style="text-decoration: underline;"> <span style="color: Olive;">0</span><span
+       style="color: red;">2</span><span style="color: green;">4</span><span style="color: blue;">3</span></span> r 4
+ 17)<span style="color: Olive;">4</span>135
+    <span style="color: Olive;">0 </span>        <span style="color: Olive;">0</span> &times;   17 = <span
+        style="color: Olive;">0</span>000
+    <span style="color: red;">41</span>35     4135 -    <span style="color: Olive;">0</span> = 4135
+    <span style="color: red;">34 </span>      <span style="color: red;">2</span>00 &times;   17 = <span
+        style="color: red;">34</span>00
+     <span style="color: green;">73</span>5     4135 - <span style="color: red;">3400</span> =  735
+     <span style="color: green;">68 </span>       <span style="color: green;">4</span>0 &times;   17 =  <span
+         style="color: green;">68</span>0
+      <span style="color: blue;">55</span>      735 -  <span style="color: green;">680</span> =   55
+      <span style="color: blue;">51</span>        <span style="color: blue;">3</span> &times;   17 =   <span
+          style="color: blue;">51</span>
+       4       55 -   <span style="color: blue;">51</span> =    4
+ Answer: 243 remainder 4</pre>
+					<p>
+						First of all we would look at the top digit of the dividend. We see that the smallest
+						multiple of the divisor which is less or equal to it is 0. We output a 0 to the
+						result.</p>
+					<p>
+						Next we look at the second to top digit of the dividend and all higher digits. We
+						see the smallest multiple of the divisor which is less than or equal is 34. We output
+						a 2 and subtract 3400.</p>
+					<p>
+						Next we look at the third digit of the dividend and all higher digits. The smallest
+						multiple of the divisor that is less than or equal to this is 68. We output 4 and
+						subtract 680.</p>
+					<p>
+						Finally we look at all remaining digits. We see that the lowest multiple of the
+						divisor that is less than the remaining digits is 51. We output a 3, subtract 51.
+						The result of the subtraction is our remainder.</p>
+				</div>
+				<p>
+					To implement division in assembly code, we will implement binary long division.
+					We do this because the numbers are stored in binary, which gives us easy access
+					to the all important bit shift operations, and because division in binary is simpler
+					than in any higher base due to the much lower number of cases.</p>
+				<pre style="float: left;">    <span style="text-decoration: underline;">    1011</span> r 1   
+1010)1101111
+     1010   
+       11111
+       1010 
+        1011
+        1010
+           1</pre>
+				<p>
+					This example shows how binary long division works. You simply shift the divisor
+					as far right as possible without exceeding the dividend, output a 1 according to
+					the poisition and subtract the number. Whatever remains is the remainder. In this
+					case we show 1101111<sub>2</sub> &divide; 1010<sub>2</sub> = 1011<sub>2</sub> remainder
+					1<sub>2</sub>. In decimal, 111 &divide; 10 = 11 remainder 1.</p>
+				<p style="clear: left;">
+					Try to implement long division yourself now. You should write a function, DivideU32
+					which divides r0 by r1, returning the result in r0, and the remainder in r1. Below,
+					we will go through a very efficient implementation.
+				</p>
+				<div class="pseudoCodeBlock"><p>
+					<span class="keyword">function </span>DivideU32(r0 <span class="keyword">is</span>
+					dividend, r1 <span class="keyword">is</span> divisor)<br />
+					<div class="indent"><p>
+						<span class="keyword">set</span> shift <span class="keyword">to</span> 31<br />
+						<span class="keyword">set</span> result <span class="keyword">to</span> 0<br />
+						<span class="keyword">while</span> shift &ge; 0<br />
+						<div class="indent"><p>
+							<span class="keyword">if</span> dividend &ge; (divisor &lt;&lt; shift) <span class="keyword">
+								then</span><br />
+							<div class="indent"><p>
+								<span class="keyword">set</span> dividend <span class="keyword">to</span> dividend
+								- (divisor &lt;&lt shift)<br />
+								<span class="keyword">set</span> result <span class="keyword">to</span> result +
+								1<br />
+							</div><p>
+							<span class="keyword">end if</span><br />
+							<span class="keyword">set</span> result <span class="keyword">to</span> result &lt;&lt;
+							1<br />
+							<span class="keyword">set</span> shift <span class="keyword">to</span> shift - 1<br />
+						</div><p>
+						<span class="keyword">loop</span><br />
+						<span class="keyword">return</span> (result, dividend)
+					</div><p>
+					<span class="keyword">end function</span><br />
+				</div>
+				<p>
+					This code does achieve what we need, but would not work as assembly code. Our problem
+					comes from the fact that our registers only hold 32 bits, and so the result of <span
+						class="pseudoCodeInline">divisor &lt;&lt; shift</span> may not fit in a register
+					(we call this overflow). This is a real problem. Did your solution have overflow?</p>
+				<p>
+					Fortunately, an instruction exists called <span class="armCodeInline">clz</span>
+					or count leading zeros, which counts the number of zeros in the binary representation
+					of a number starting at the top bit. Conveniently, this is exactly the number of
+					times we can shift the register left before overflow occurs. Another optimisation
+					you may spot is that we compute <span class="pseudoCodeInline">divisor &lt;&lt; shift</span>
+					twice each loop. We could improve upon this by shifting the divisor at the beginning,
+					then shifting it down at the end of each loop to avoid any need to shift it elsewhere.</p>
+				<p>
+					Let's have a look at the assembly code to make further improvements.</p>
+				<div class="armCodeBlock"><p>
+					.globl DivideU32<br />
+					DivideU32:<br />
+					result .req r0<br />
+					remainder .req r1<br />
+					shift .req r2<br />
+					current .req r3<br />
+					<br />
+					clz shift,r1<br />
+					lsl current,r1,shift<br />
+					mov remainder,r0<br />
+					mov result,#0<br />
+					<br />
+					divideU32Loop$:<br />
+					<div class="indent"><p>
+						cmp shift,#0<br />
+						blt divideU32Return$<br />
+						cmp remainder,current<br />
+						<br />
+						addge result,result,#1<br />
+						subge remainder,current<br />
+						sub shift,#1<br />
+						lsr current,#1<br />
+						lsl result,#1<br />
+						b divideU32Loop$<br />
+					</div><p>
+					<br />
+					divideU32Return$:<br />
+					.unreq current<br />
+					mov pc,lr<br />
+					<br />
+					.unreq result<br />
+					.unreq remainder<br />
+					.unreq shift<br />
+				</div>
+				<div class="commandBox"><p>
+					<span class="armCodeInline">clz dest,src</span> stores the number of zeros from
+					the top to the first one of register <span class="armCodeInline">dest</span> to
+					register <span class="armCodeInline">src</span>
+				</div>
+				<p>
+					You may, quite rightly, think that this looks quite efficient. It is pretty good,
+					but division is a very expensive operation, and one we may wish to do quite often,
+					so it would be good if we could improve the speed in any way. When looking to optimise
+					code with a loop in it, it is always important to consider how many times the loop
+					must run. In this case, the loop will run a maximum of 31 times for an input of
+					1. Without making special cases, this could often be improved easily. For example
+					when dividing 1 by 1, no shift is required, yet we shift the divisor to each of
+					the positions above it. This could be improved by simply using the new <span class="armCodeInline">
+						clz</span> command on the dividend and subtracting this from the shift. In the
+					case of 1 &divide; 1, this means shift would be set to 0, rightly indicating no
+					shift is required. If this causes the shift to be negative, the divisor is bigger
+					than the dividend and so we know the result is 0 remainder the dividend. Another
+					quick check we could make is if the current value is ever 0, then we have a perfect
+					division and can stop looping.</p>
+				<div class="armCodeBlock"><p>
+					.globl DivideU32<br />
+					DivideU32:<br />
+					result .req r0<br />
+					remainder .req r1<br />
+					shift .req r2<br />
+					current .req r3<br />
+					<br />
+					clz shift,r1<br />
+					clz r3,r0<br />
+					subs shift,r3<br />
+					lsl current,r1,shift<br />
+					mov remainder,r0<br />
+					mov result,#0<br />
+					blt divideU32Return$<br />
+					<br />
+					divideU32Loop$:<br />
+					<div class="indent"><p>
+						cmp remainder,current<br />
+						blt divideU32LoopContinue$<br />
+						<br />
+						add result,result,#1<br />
+						subs remainder,current<br />
+						lsleq result,shift
+						<br />
+						beq divideU32Return$<br />
+					</div><p>
+					divideU32LoopContinue$:<br />
+					<div class="indent"><p>
+						subs shift,#1<br />
+						lsrge current,#1<br />
+						lslge result,#1<br />
+						bge divideU32Loop$<br />
+					</div><p>
+					<br />
+					divideU32Return$:<br />
+					.unreq current<br />
+					mov pc,lr<br />
+					<br />
+					.unreq result<br />
+					.unreq remainder<br />
+					.unreq shift<br />
+				</div>
+				<p>
+					Copy the code above to a file called 'maths.s'.</p>
+				<h2 id="numberstrings">
+					3 Number Strings</h2>
+				<p>
+					Now that we can do division, let's have another look at implementing number to string
+					conversion. The following is pseudo code to convert numbers from registers into strings
+					in up to base 36. By convention, a % b means the remainder of dividing a by b.</p>
+				<div class="pseudoCodeBlock"><p>
+					<span class="keyword">function</span> SignedString(r0 <span class="keyword">is</span>
+					value, r1 <span class="keyword">is</span> dest, r2 <span class="keyword">is</span>
+					base)<br />
+					<div class="indent"><p>
+						<span class="keyword">if</span> value &ge; 0<br />
+						<span class="keyword">then return</span> UnsignedString(value, dest, base)<br />
+						<span class="keyword">otherwise</span><br />
+						<div class="indent"><p>
+							<span class="keyword">if</span> dest > 0 <span class="keyword">then</span><br />
+							<div class="indent"><p>
+								setByte(dest, '-')<br />
+								<span class="keyword">set</span> dest <span class="keyword">to</span> dest + 1<br />
+							</div><p>
+							<span class="keyword">end if</span><br />
+							<span class="keyword">return</span> UnsignedString(-value, dest, base) + 1<br />
+						</div><p>
+						<span class="keyword">end if</span><br />
+					</div><p>
+					<span class="keyword">end function</span><br />
+					<br />
+					<span class="keyword">function</span> UnsignedString(r0 <span class="keyword">is</span>
+					value, r1 <span class="keyword">is</span> dest, r2 <span class="keyword">is</span>
+					base)<br />
+					<div class="indent"><p>
+						<span class="keyword">set</span> length <span class="keyword">to</span> 0<br />
+						<span class="keyword">do</span><br />
+						<div class="indent"><p>
+							<span class="keyword">set</span> (value, rem) <span class="keyword">to</span> DivideU32(value,
+							base)<br />
+							<span class="keyword">if</span> rem &gt 10<br />
+							<span class="keyword">then set</span> rem <span class="keyword">to</span> rem +
+							'0'<br />
+							<span class="keyword">otherwise set</span> rem <span class="keyword">to</span> rem
+							- 10 + 'a'<br />
+							<span class="keyword">if</span> dest &gt; 0<br />
+							<span class="keyword">then</span> setByte(dest + length, rem)<br />
+							<span class="keyword">set</span> length <span class="keyword">to</span> length +
+							1<br />
+						</div><p>
+						<span class="keyword">while</span> value &gt; 0<br />
+						<span class="keyword">if</span> dest &gt; 0<br />
+						<span class="keyword">then</span> ReverseString(dest, length)<br />
+						<span class="keyword">return</span> length<br />
+					</div><p>
+					<span class="keyword">end function</span><br />
+					<br />
+					<span class="keyword">function</span> ReverseString(r0 <span class="keyword">is</span>
+					string, r1 <span class="keyword">is</span> length)<br />
+					<div class="indent"><p>
+						<span class="keyword">set</span> end <span class="keyword">to</span> string + length
+						- 1<br />
+						<span class="keyword">while</span> end &gt; start<br />
+						<div class="indent"><p>
+							<span class="keyword">set</span> temp1 <span class="keyword">to</span> readByte(start)<br />
+							<span class="keyword">set</span> temp2 <span class="keyword">to</span> readByte(end)<br />
+							setByte(start, temp2)<br />
+							setByte(end, temp1)<br />
+							<span class="keyword">set</span> start <span class="keyword">to</span> start + 1<br />
+							<span class="keyword">set</span> end <span class="keyword">to</span> end - 1<br />
+						</div><p>
+						<span class="keyword">end while</span><br />
+					</div><p>
+					<span class="keyword">end function</span><br />
+				</div>
+				<p>
+					In a file called 'text.s' implement the above. Remember that if you get stuck, a
+					full solution can be found on the downloads page.</p>
+				<h2 id="formatstrings">
+					4 Format Strings</h2>
+				<p>
+					Let's get back to our string formatting method. Since we're programming our own
+					operating system, we can add or change formatting rules as we please. We may find
+					it useful to add a %b operation that outputs a number in binary, and if you're not
+					using null terminated strings, you may wish to alter the behaviour of %s to take
+					the length of the string from another argument, or from a length prefix if you wish.
+					I will use a null terminator in the example below.</p>
+				<p>
+					One of the main obstacles to implementing this function is that the number of arguments
+					varies. According to the ABI, additional arguments are pushed onto the stack before
+					calling the method in reverse order. So, for example, if we wish to call our method
+					with 8 parameters; 1,2,3,4,5,6,7 and 8, we would do the following:</p>
+				<ol>
+					<li>Set r0 = 5, r1 = 6, r2 = 7, r3 = 8</li>
+					<li>Push {r0,r1,r2,r3}</li>
+					<li>Set r0 = 1, r1 = 2, r2 = 3, r3 = 4</li>
+					<li>Call the function</li>
+					<li>Add sp,#4*4</li>
+				</ol>
+				<p>
+					Now we must decide what arguments our function actually needs. In my case, I used
+					the format string address in r0, the length of the format string in r1, the destination
+					string address in r2, followed by the list of arguments required, starting in r3
+					and continuing on the stack as above. If you wish to use a null terminated format
+					string, the parameter in r1 can be removed. If you wish to have a maximum buffer
+					length, you could store this in r3. As an additional modification, I think it is
+					useful to alter the function so that if the destination string address is 0, no
+					string is outputted, but an accurate length is still returned, so that the length
+					of a formatted string can be accurately determined.</p>
+				<p>
+					If you wish to attempt the implementation on your own, try it now. If not, I will
+					first construct the pseudo code for the method, then give the assembly code implementation.</p>
+				<div class="pseudoCodeBlock"><p>
+					<span class="keyword">function</span> StringFormat(r0 <span class="keyword">is</span>
+					format, r1 <span class="keyword">is</span> formatLength, r2 <span class="keyword">is</span>
+					dest, ...)<br />
+					<div class="indent"><p>
+						<span class="keyword">set</span> index <span class="keyword">to</span> 0<br />
+						<span class="keyword">set</span> length <span class="keyword">to</span> 0<br />
+						<span class="keyword">while</span> index &lt; formatLength<br />
+						<div class="indent"><p>
+							<span class="keyword">if</span> readByte(format + index) = '%' <span class="keyword">
+								then</span><br />
+							<div class="indent"><p>
+								<span class="keyword">set</span> index <span class="keyword">to</span> index + 1<br />
+								<span class="keyword">if</span> readByte(format + index) = '%' <span class="keyword">
+									then</span><br />
+								<div class="indent"><p>
+									<span class="keyword">if</span> dest > 0<br />
+									<span class="keyword">then</span> setByte(dest + length, '%')<br />
+									<span class="keyword">set</span> length <span class="keyword">to</span> length +
+									1<br />
+								</div><p>
+								<span class="keyword">otherwise if</span> readByte(format + index) = 'c' <span class="keyword">
+									then</span><br />
+								<div class="indent"><p>
+									<span class="keyword">if</span> dest > 0<br />
+									<span class="keyword">then</span> setByte(dest + length, nextArg)<br />
+									<span class="keyword">set</span> length <span class="keyword">to</span> length +
+									1<br />
+								</div><p>
+								<span class="keyword">otherwise if</span> readByte(format + index) = 'd' <span class="keyword">
+									or</span> 'i' <span class="keyword">then</span><br />
+								<div class="indent"><p>
+									<span class="keyword">set</span> length <span class="keyword">to</span> length +
+									SignedString(nextArg, dest, 10)<br />
+								</div><p>
+								<span class="keyword">otherwise if</span> readByte(format + index) = 'o' <span class="keyword">
+									then</span><br />
+								<div class="indent"><p>
+									<span class="keyword">set</span> length <span class="keyword">to</span> length +
+									UnsignedString(nextArg, dest, 8)<br />
+								</div><p>
+								<span class="keyword">otherwise if</span> readByte(format + index) = 'u' <span class="keyword">
+									then</span><br />
+								<div class="indent"><p>
+									<span class="keyword">set</span> length <span class="keyword">to</span> length +
+									UnsignedString(nextArg, dest, 10)<br />
+								</div><p>
+								<span class="keyword">otherwise if</span> readByte(format + index) = 'b' <span class="keyword">
+									then</span><br />
+								<div class="indent"><p>
+									<span class="keyword">set</span> length <span class="keyword">to</span> length +
+									UnsignedString(nextArg, dest, 2)<br />
+								</div><p>
+								<span class="keyword">otherwise if</span> readByte(format + index) = 'x' <span class="keyword">
+									then</span><br />
+								<div class="indent"><p>
+									<span class="keyword">set</span> length <span class="keyword">to</span> length +
+									UnsignedString(nextArg, dest, 16)<br />
+								</div><p>
+								<span class="keyword">otherwise if</span> readByte(format + index) = 's' <span class="keyword">
+									then</span><br />
+								<div class="indent"><p>
+									<span class="keyword">set</span> str <span class="keyword">to</span> nextArg<br />
+									<span class="keyword">while</span> getByte(str) != '\0'<br />
+									<div class="indent"><p>
+										<span class="keyword">if</span> dest > 0<br />
+										<span class="keyword">then</span> setByte(dest + length, getByte(str))<br />
+										<span class="keyword">set</span> length <span class="keyword">to</span> length +
+										1<br />
+										<span class="keyword">set</span> str <span class="keyword">to</span> str + 1<br />
+									</div><p>
+									<span class="keyword">loop</span><br />
+								</div><p>
+								<span class="keyword">otherwise if</span> readByte(format + index) = 'n' <span class="keyword">
+									then</span><br />
+								<div class="indent"><p>
+									setWord(nextArg, length)<br />
+								</div><p>
+								<span class="keyword">end if</span><br />
+							</div><p>
+							<span class="keyword">otherwise</span><br />
+							<div class="indent"><p>
+								<span class="keyword">if</span> dest > 0<br />
+								<span class="keyword">then</span> setByte(dest + length, readByte(format + index))<br />
+								<span class="keyword">set</span> length <span class="keyword">to</span> length +
+								1<br />
+							</div><p>
+							<span class="keyword">end if</span><br />
+							<span class="keyword">set</span> index <span class="keyword">to</span> index + 1<br />
+						</div><p>
+						<span class="keyword">loop</span><br />
+						<span class="keyword">return </span>length<br />
+					</div><p>
+					<span class="keyword">end function</span><br />
+				</div>
+				<p>
+					Although this function is massive, it is quite straightforward. Most of the code
+					goes into checking all the various conditions, the code for each one is simple.
+					Further, all the various unsigned integer cases are the same but for the base, and
+					so can be summarised in assembly. This is given below.</p>
+				<div class="armCodeBlock"><p>
+					.globl FormatString<br />
+					FormatString:<br />
+					format .req r4<br />
+					formatLength .req r5<br />
+					dest .req r6<br />
+					nextArg .req r7<br />
+					argList .req r8<br />
+					length .req r9<br />
+					<br />
+					push {r4,r5,r6,r7,r8,r9,lr}<br />
+					mov format,r0<br />
+					mov formatLength,r1<br />
+					mov dest,r2<br />
+					mov nextArg,r3<br />
+					add argList,sp,#7*4<br />
+					mov length,#0<br />
+					<br />
+					formatLoop$:<br />
+					<div class="indent"><p>
+						subs formatLength,#1<br />
+						movlt r0,length<br />
+						poplt {r4,r5,r6,r7,r8,r9,pc}<br />
+						<br />
+						ldrb r0,[format]<br />
+						add format,#1<br />
+						teq r0,#'%'<br />
+						beq formatArg$<br />
+						<br />
+					</div><p>
+					formatChar$:<br />
+					<div class="indent"><p>
+						teq dest,#0<br />
+						strneb r0,[dest]<br />
+						addne dest,#1<br />
+						add length,#1<br />
+						b formatLoop$<br />
+						<br />
+					</div><p>
+					formatArg$:<br />
+					<div class="indent"><p>
+						subs formatLength,#1<br />
+						movlt r0,length<br />
+						poplt {r4,r5,r6,r7,r8,r9,pc}<br />
+						<br />
+						ldrb r0,[format]<br />
+						add format,#1<br />
+						teq r0,#'%'<br />
+						beq formatChar$<br />
+						<br />
+						teq r0,#'c'<br />
+						moveq r0,nextArg<br />
+						ldreq nextArg,[argList]<br />
+						addeq argList,#4<br />
+						beq formatChar$<br />
+						<br />
+						teq r0,#'s'<br />
+						beq formatString$<br />
+						<br />
+						teq r0,#'d'<br />
+						beq formatSigned$<br />
+						<br />
+						teq r0,#'u'<br />
+						teqne r0,#'x'<br />
+						teqne r0,#'b'<br />
+						teqne r0,#'o'<br />
+						beq formatUnsigned$<br />
+						<br />
+						b formatLoop$<br />
+						<br />
+					</div><p>
+					formatString$:<br />
+					<div class="indent"><p>
+						ldrb r0,[nextArg]<br />
+						teq r0,#0x0<br />
+						ldreq nextArg,[argList]<br />
+						addeq argList,#4<br />
+						beq formatLoop$<br />
+						add length,#1<br />
+						teq dest,#0<br />
+						strneb r0,[dest]<br />
+						addne dest,#1<br />
+						add nextArg,#1<br />
+						b formatString$<br />
+						<br />
+					</div><p>
+					formatSigned$:<br />
+					<div class="indent"><p>
+						mov r0,nextArg<br />
+						ldr nextArg,[argList]<br />
+						add argList,#4<br />
+						mov r1,dest<br />
+						mov r2,#10<br />
+						bl SignedString<br />
+						teq dest,#0<br />
+						addne dest,r0<br />
+						add length,r0<br />
+						b formatLoop$<br />
+						<br />
+					</div><p>
+					formatUnsigned$:<br />
+					<div class="indent"><p>
+						teq r0,#'u'<br />
+						moveq r2,#10<br />
+						teq r0,#'x'<br />
+						moveq r2,#16<br />
+						teq r0,#'b'<br />
+						moveq r2,#2<br />
+						teq r0,#'o'<br />
+						moveq r2,#8<br />
+						<br />
+						mov r0,nextArg<br />
+						ldr nextArg,[argList]<br />
+						add argList,#4<br />
+						mov r1,dest<br />
+						bl UnsignedString<br />
+						teq dest,#0<br />
+						addne dest,r0<br />
+						add length,r0<br />
+						b formatLoop$<br />
+					</div><p>
+				</div>
+				<h2 id="convertos">
+					5 Convert OS</h2>
+				<p>
+					Feel free to try using this method however you wish. As an example, here is the
+					code to generate a conversion chart from base 10 to binary to hexadecimal to octal
+					and to ASCII.</p>
+				<p>
+					Delete all code after <span class="armCodeInline">bl SetGraphicsAddress</span> in
+					'main.s' and replace it with the following:</p>
+				<div class="armCodeBlock"><p>
+					mov r4,#0<br />
+					loop$:<br />
+					ldr r0,=format<br />
+					mov r1,#formatEnd-format<br />
+					ldr r2,=formatEnd<br />
+					lsr r3,r4,#4<br />
+					push {r3}<br />
+					push {r3}<br />
+					push {r3}<br />
+					push {r3}<br />
+					bl FormatString<br />
+					add sp,#16<br />
+					<br />
+					mov r1,r0<br />
+					ldr r0,=formatEnd<br />
+					mov r2,#0<br />
+					mov r3,r4<br />
+					<br />
+					cmp r3,#768-16<br />
+					subhi r3,#768<br />
+					addhi r2,#256<br />
+					cmp r3,#768-16<br />
+					subhi r3,#768<br />
+					addhi r2,#256<br />
+					cmp r3,#768-16<br />
+					subhi r3,#768<br />
+					addhi r2,#256<br />
+					<br />
+					bl DrawString<br />
+					<br />
+					add r4,#16<br />
+					b loop$<br />
+					<br />
+					.section .data<br />
+					format:<br />
+					.ascii "%d=0b%b=0x%x=0%o='%c'"<br />
+					formatEnd:<br />
+				</div>
+				<p>
+					Can you work out what will happen before testing? Particularly what happens for
+					r3 &ge; 128? Try it on the Raspberry Pi to see if you're right. If it doesn't work,
+					please see our troubleshooting page.</p>
+				<p>
+					When it does work, congratulations, you've completed the Screen04 tutorial, and
+					reached the end of the screen series! We've learned about pixels and frame buffers,
+					and how these apply to the Raspberry Pi. We've learned how to draw simple lines,
+					and also how to draw characters, as well as the invaluable skill of formatting numbers
+					into text. We now have all that you would need to make graphical output on an Operating
+					System. Can you make some more drawing methods? What about 3D graphics? Can you
+					implement a 24bit frame buffer? What about reading the size of the framebuffer in
+					from the command line?</p>
+				<p>
+					The next series is the <a href="input01.html">Input</a> series, which teaches how
+					to use the keyboard and mouse to really get towards a traditional console computer.</p>
+			</div>
+			<div id="pageFooter">
+				<hr />
+				<p><a rel="license" href="http://creativecommons.org/licenses/by-sa/3.0/deed.en_GB"><img alt="Creative Commons Licence" style="border-width:0" src="http://i.creativecommons.org/l/by-sa/3.0/88x31.png" /></a><br /><span xmlns:dct="http://purl.org/dc/terms/" property="dct:title">Baking Pi: Operating Systems Development</span> by <span xmlns:cc="http://creativecommons.org/ns#" property="cc:attributionName">Alex Chadwick</span> is licensed under a <a rel="license" href="http://creativecommons.org/licenses/by-sa/3.0/deed.en_GB">Creative Commons Attribution-ShareAlike 3.0 Unported License</a>.</p>
+			</div>
+		</div>
+	</div>
+</body>
+</html>

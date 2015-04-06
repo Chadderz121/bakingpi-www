@@ -1,0 +1,1431 @@
+﻿<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml">
+<head>
+	<title>Lesson 11 Input02</title>
+	<link href="stylesheet.css" rel="Stylesheet" type="text/css" />
+	<script language="javascript" type="text/javascript" src="script.js"></script>
+</head>
+<body>
+	<div id="contentAll">
+		<div id="courseHead">
+			<h1>
+				Lesson 11 Input02</h1>
+		</div>
+		<div id="pageAll">
+			<div id="pageBody">
+				<p>
+					The Input02 lesson builds on Input01, by building a simple command line interface
+					where the user can type commands and the computer interprets and displays them.
+					It is assumed you have the code for the <a href="input01.html">Lesson 11: Input01</a>
+					operating system as a basis.</p>
+				<div class="ucampas-toc">
+				</div>
+				<h2 id="textbuffer">
+					1 Terminal 1</h2>
+					<div class="informationBox"><p>In the early days of computing, there would usually be one large computer in a building, and many 'terminals' which sent commands to it. The computer would take it in turns to execute different incoming commands.</p></div>
+				<p>
+					Almost every operating system starts life out as a text terminal. This is typically
+					a black screen with white writing, where you type commands for the computer to execute
+					on the keyboard, and it explains how you've mistyped them, or very occasionally,
+					does what you want. This approach has two main advantages: it provides a simple,
+					robust control mechanism for the computer using only a keyboard and monitor, and
+					it is done by almost every operating system, so is widely understood by system administrators.</p>
+				<p>
+					Let's analyse what we want to do precisely:</p>
+				<ol>
+					<li>Computer turns on, displays some sort of welcome message</li>
+					<li>Computer indicates its ready for input</li>
+					<li>User types a command, with parameters, on the keyboard</li>
+					<li>User presses return or enter to commit the command</li>
+					<li>Computer interprets command and performs actions if command is acceptable</li>
+					<li>Computer displays messages to indicate if command was successful, and also what
+						happened</li>
+					<li>Loop back to 2</li>
+				</ol>
+				<p>
+					One defining feature of such terminals is that they are unified for both input and
+					output. The same screen is used to enter inputs as is used to print outputs. This
+					means it is useful to build an abstraction of a character based display. In a character
+					based display, the smallest unit is a character, not a pixel. The screen is divided
+					into a fixed number of characters which have varying colours. We can build this
+					on top of our existing screen code, by storing the characters and their colours,
+					and then using the DrawCharacter method to push them to the screen. Once we have
+					a character based display, drawing text becomes a matter of drawing a line of characters.</p>
+				<p>
+					In a new file called terminal.s copy the following code:</p>
+				<div class="armCodeBlock">
+					<p>
+						.section .data<br />
+						.align 4<br />
+						terminalStart:<br />
+						.int terminalBuffer<br />
+						terminalStop:<br />
+						.int terminalBuffer<br />
+						terminalView:<br />
+						.int terminalBuffer<br />
+						terminalColour:<br />
+						.byte 0xf<br />
+						.align 8<br />
+						terminalBuffer:<br />
+						.rept 128*128<br />
+						.byte 0x7f<br />
+						.byte 0x0<br />
+						.endr<br />
+						terminalScreen:<br />
+						.rept 1024/8 * 768/16<br />
+						.byte 0x7f<br />
+						.byte 0x0<br />
+						.endr<br />
+					</p>
+				</div>
+				<p>
+					This sets up the data we need for the text terminal. We have two main storages:
+					terminalBuffer and terminalScreen. terminalBuffer is storage for all of the text
+					we have displayed. It stores up to 128 lines of text (each containing 128 characters).
+					Each character consists of an ASCII character code and a colour, all of which are
+					initially set to 0x7f (ASCII delete) and 0 (black on a black background). terminalScreen
+					stores the characters that are currently displayed on the screen. It is 128 by 48
+					characters, similarly initialised. You may think that we only need this terminalScreen,
+					not the terminalBuffer, but storing the buffer has 2 main advantages:</p>
+				<ol>
+					<li>We can easily see which characters are different, so we only have to draw those.</li>
+					<li>We can 'scroll' back through the terminal's history because it is stored (to a limit).</li>
+				</ol>
+				<div class="informationBox"><p>You should always try to design systems that do the minimum amount of work, as they run much faster for things which don't often change.</p></div>
+				<p>
+					The differing trick is really common on low power Operating Systems. Drawing the
+					screen is a slow operation, and so we only want to draw thing that we absolutely
+					have to. In this system, we can freely alter the terminalBuffer, and then call a
+					method which copies the bits that change to the screen. This means we don't have
+					to draw each character as we go along, which may save time in the long run on very
+					long sections of text that span many lines.</p>
+				<p>
+					The other values in the .data section are as follows:</p>
+				<dl>
+					<dt>terminalStart</dt>
+					<dd>
+						The first character which has been written in terminalBuffer.</dd>
+					<dt>terminalStop</dt>
+					<dd>
+						The last character which has been written in terminalBuffer.</dd>
+					<dt>terminalView</dt>
+					<dd>
+						The first character on the screen at present. We can use this to scroll the screen.</dd>
+					<dt>temrinalColour</dt>
+					<dd>
+						The colour to draw new characters with.</dd>
+				</dl>
+				<div class="informationBox">
+					<p>
+						Circular buffers are an example of an <strong>data structure</strong>. These are
+						just ideas we have for organising data, that we sometimes implement in software.
+					</p>
+				</div>
+				<p>
+					<img alt="Diagram showing hellow world being inserted into a circular buffer of size 5."
+						src="images/circular_buffer.png" />
+					The reason why terminalStart needs to be stored is because termainlBuffer should
+					be a circular buffer. This means that when the buffer is completely full, the end
+					'wraps' round to the start, and so the character after the very last one is the
+					first one. Thus, we need to advance terminalStart so we know that we've done this.
+					When wokring with the buffer this can easily be implemented by checking if the index
+					goes beyond the end of the buffer, and setting it back to the beginning if it does.
+					Circular buffers are a common and clever way of storing a lot of data, where only
+					the most recent data is important. It allows us to keep writing indefinitely, while
+					always being sure there is a certain amount of recent data available. They're often
+					used in signal processing or compression algorithms. In this case, it allows us
+					to store a 128 line history of the terminal, without any penalties for writing over
+					128 lines. If we didn't have this, we would have to copy 127 lines back a line very
+					time we went beyond the 128th line, wasting valuable time.</p>
+				<p>
+					I've mentioned the terminalColour here a few times. You can implement this however
+					you, wish, however there is something of a standard on text terminals to have only
+					16 colours for foreground, and 16 colours for background (meaning there are 16<sup>2</sup>
+					= 256 combinations). The colours on a CGA terminal are defined as follows:</p>
+				<table>
+					<caption>
+						Table 1.1 - CGA Colour Codes</caption>
+					<thead>
+						<tr>
+							<th>
+								Number
+							</th>
+							<th>
+								Colour (R, G, B)
+							</th>
+						</tr>
+					</thead>
+					<tr>
+						<td>
+							0
+						</td>
+						<td style="background-color: #000000; color: #ffffff;">
+							Black (0, 0, 0)
+						</td>
+					</tr>
+					<tr>
+						<td>
+							1
+						</td>
+						<td style="background-color: #0000aa; color: #ffffff;">
+							Blue (0, 0, ⅔)
+						</td>
+					</tr>
+					<tr>
+						<td>
+							2
+						</td>
+						<td style="background-color: #00aa00; color: #ffffff;">
+							Green (0, ⅔, 0)
+						</td>
+					</tr>
+					<tr>
+						<td>
+							3
+						</td>
+						<td style="background-color: #00aaaa; color: #ffffff;">
+							Cyan (0, ⅔, ⅔)
+						</td>
+					</tr>
+					<tr>
+						<td>
+							4
+						</td>
+						<td style="background-color: #aa0000; color: #ffffff;">
+							Red (⅔, 0, 0)
+						</td>
+					</tr>
+					<tr>
+						<td>
+							5
+						</td>
+						<td style="background-color: #aa00aa; color: #ffffff;">
+							Magenta (⅔, 0, ⅔)
+						</td>
+					</tr>
+					<tr>
+						<td>
+							6
+						</td>
+						<td style="background-color: #aa5500; color: #ffffff;">
+							Brown (⅔, ⅓, 0)
+						</td>
+					</tr>
+					<tr>
+						<td>
+							7
+						</td>
+						<td style="background-color: #aaaaaa; color: #000000;">
+							Light Grey (⅔, ⅔, ⅔)
+						</td>
+					</tr>
+					<tr>
+						<td>
+							8
+						</td>
+						<td style="background-color: #555555; color: #ffffff;">
+							Grey (⅓, ⅓, ⅓)
+						</td>
+					</tr>
+					<tr>
+						<td>
+							9
+						</td>
+						<td style="background-color: #5555ff; color: #ffffff;">
+							Light Blue (⅓, ⅓, 1)
+						</td>
+					</tr>
+					<tr>
+						<td>
+							10
+						</td>
+						<td style="background-color: #55ff55; color: #000000;">
+							Light Green (⅓, 1, ⅓)
+						</td>
+					</tr>
+					<tr>
+						<td>
+							11
+						</td>
+						<td style="background-color: #55ffff; color: #000000;">
+							Light Cyan (⅓, 1, 1)
+						</td>
+					</tr>
+					<tr>
+						<td>
+							12
+						</td>
+						<td style="background-color: #ff5555; color: #000000;">
+							Light Red (1, ⅓, ⅓)
+						</td>
+					</tr>
+					<tr>
+						<td>
+							13
+						</td>
+						<td style="background-color: #ff55ff; color: #000000;">
+							Light Magenta (1, ⅓, 1)
+						</td>
+					</tr>
+					<tr>
+						<td>
+							14
+						</td>
+						<td style="background-color: #ffff55; color: #000000;">
+							Yellow (1, 1, ⅓)
+						</td>
+					</tr>
+					<tr>
+						<td>
+							15
+						</td>
+						<td style="background-color: #ffffff; color: #000000;">
+							White (1, 1, 1)
+						</td>
+					</tr>
+				</table>
+				<div class="informationBox"><p>Brown was used as the alternative (dark yellow) was unappealing and not useful.</p></div>
+				<p>
+					We store the colour of each character by storing the fore colour in the low nibble
+					of the colour byte, and the background colour in the high nibble. Apart from brown,
+					all of these colours follow a pattern such that in binary, the top bit represents
+					adding ⅓ to each component, and the other bits represent adding ⅔ to individual
+					components. This makes it easy to convert to RGB colour values.</p>
+				<p>
+					We need a method, TerminalColour, to read these 4 bit colour codes, and then call
+					SetForeColour with the 16 bit equivalent. Try to implement this on your own. If
+					you get stuck, or have not completed the Screen series, my implementation is given
+					below:</p>
+				<div class="armCodeBlock">
+					<p>
+						.section .text<br />
+						TerminalColour:<br />
+						teq r0,#6<br />
+						ldreq r0,=0x02B5<br />
+						beq SetForeColour<br />
+						<br />
+						tst r0,#0b1000<br />
+						ldrne r1,=0x52AA<br />
+						moveq r1,#0<br />
+						tst r0,#0b0100<br />
+						addne r1,#0x15<br />
+						tst r0,#0b0010<br />
+						addne r1,#0x540<br />
+						tst r0,#0b0001<br />
+						addne r1,#0xA800<br />
+						mov r0,r1<br />
+						b SetForeColour<br />
+					</p>
+				</div>
+				<h2 id="display">
+					2 Showing the Text</h2>
+				<p>
+					The first method we really need for our terminal is TerminalDisplay, one that copies
+					the current data from terminalBuffer to terminalScreen and the actual screen. As
+					mentioned, this method should do a minimal amount of work, because we need to be
+					able to call it often. It should compare the text in terminalBuffer with that in
+					terminalDisplay, and copy it across if they're different. Remember, terminalBuffer
+					is a circular buffer running, in this case, from terminalView to terminalStop or
+					128*48 characters, whichever comes sooner. If we hit terminalStop, we'll assume
+					all characters after that point are 7f<sub>16</sub> (ASCII delete), and have colour
+					0 (black on a black background).</p>
+				<p>
+					Let's look at what we have to do:</p>
+				<ol>
+					<li>Load in terminalView, terminalStop and the address of terminalDisplay.</li>
+					<li>For each row:
+						<ol>
+							<li>For each column:
+								<ol>
+									<li>If view is not equal to stop, load the current character and colour from view</li>
+									<li>Otherwise load the character as 0x7f and the colour as 0</li>
+									<li>Load the current character from terminalDisplay</li>
+									<li>If the character and colour are equal, go to 10</li>
+									<li>Store the character and colour to terminalDisplay</li>
+									<li>Call TerminalColour with the background colour in r0</li>
+									<li>Call DrawCharacter with r0 = 0x7f (ASCII delete, a block), r1 = x, r2 = y</li>
+									<li>Call TerminalColour with the foreground colour in r0</li>
+									<li>Call DrawCharacter with r0 = character, r1 = x, r2 = y</li>
+									<li>Increment the position in terminalDisplay by 2</li>
+									<li>If view and stop are not equal, increment the view position by 2</li>
+									<li>If the view position is at the end of textBuffer, set it to the start</li>
+									<li>Increment the x co-ordinate by 8</li>
+								</ol>
+							</li>
+							<li>Increment the y co-ordinate by 16</li>
+						</ol>
+					</li>
+				</ol>
+				<p>
+					Try to implement this yourself. If you get stuck, my solution is given below:
+				</p>
+				<ol>
+					<li>
+						<div class="armCodeBlock">
+							<p>
+								.globl TerminalDisplay<br />
+								TerminalDisplay:<br />
+								push {r4,r5,r6,r7,r8,r9,r10,r11,lr}<br />
+								x .req r4<br />
+								y .req r5<br />
+								char .req r6<br />
+								col .req r7<br />
+								screen .req r8<br />
+								taddr .req r9<br />
+								view .req r10<br />
+								stop .req r11<br />
+								<br />
+								ldr taddr,=terminalStart<br />
+								ldr view,[taddr,#terminalView - terminalStart]<br />
+								ldr stop,[taddr,#terminalStop - terminalStart]<br />
+								add taddr,#terminalBuffer - terminalStart<br />
+								add taddr,#128*128*2
+								<br />
+								mov screen,taddr<br />
+							</p>
+						</div>
+						<p>
+							I go a little wild with variables here. I'm using taddr to store the location of
+							the end of the textBuffer for ease.</p>
+					</li>
+					<li>
+						<div class="armCodeBlock">
+							<p>
+								mov y,#0<br />
+								yLoop$:<br />
+							</p>
+						</div>
+						<p>
+							Start off the y loop.</p>
+						<ol>
+							<li>
+								<div class="armCodeBlock">
+									<p>
+										mov x,#0<br />
+										xLoop$:<br />
+									</p>
+								</div>
+								<p>
+									Start off the x loop.</p>
+								<ol>
+									<li>
+										<div class="armCodeBlock">
+											<p>
+												teq view,stop<br />
+												ldrneh char,[view]<br />
+											</p>
+										</div>
+										<p>
+											I load both the character and the colour into char simultaneously for ease.</p>
+									</li>
+									<li>
+										<div class="armCodeBlock">
+											<p>
+												moveq char,#0x7f<br />
+											</p>
+										</div>
+										<p>
+											This line complements the one above by acting as though a black delete character
+											was read.</p>
+									</li>
+									<li>
+										<div class="armCodeBlock">
+											<p>
+												ldrh col,[screen]<br />
+											</p>
+										</div>
+										<p>
+											For simplicity I load both the character and colour into col simultaneously.</p>
+									</li>
+									<li>
+										<div class="armCodeBlock">
+											<p>
+												teq col,char<br />
+												beq xLoopContinue$<br />
+											</p>
+										</div>
+										<p>
+											Now we can check if anything has changed with a teq.</p>
+									</li>
+									<li>
+										<div class="armCodeBlock">
+											<p>
+												strh char,[screen]<br />
+											</p>
+										</div>
+										<p>
+											We can also easily save the current value.</p>
+									</li>
+									<li>
+										<div class="armCodeBlock">
+											<p>
+												lsr col,char,#8<br />
+												and char,#0x7f<br />
+												lsr r0,col,#4<br />
+												bl TerminalColour<br />
+											</p>
+										</div>
+										<p>
+											I split up char into the colour in col and the character in char with a bitshift
+											and an and, then use a bitshift to get the background colour to call TerminalColour.</p>
+									</li>
+									<li>
+										<div class="armCodeBlock">
+											<p>
+												mov r0,#0x7f<br />
+												mov r1,x<br />
+												mov r2,y<br />
+												bl DrawCharacter<br />
+											</p>
+										</div>
+										<p>
+											Write out a delete character which is a coloured block.</p>
+									</li>
+									<li>
+										<div class="armCodeBlock">
+											<p>
+												and r0,col,#0xf<br />
+												bl TerminalColour<br />
+											</p>
+										</div>
+										<p>
+											Use an and to get the low nibble of col then call TerminalColour.</p>
+									</li>
+									<li>
+										<div class="armCodeBlock">
+											<p>
+												mov r0,char<br />
+												mov r1,x<br />
+												mov r2,y<br />
+												bl DrawCharacter<br />
+											</p>
+										</div>
+										<p>
+											Write out the character we're supposed to write.</p>
+									</li>
+									<li>
+										<div class="armCodeBlock">
+											<p>
+												xLoopContinue$:<br />
+												add screen,#2<br />
+											</p>
+										</div>
+										<p>
+											Increment the screen pointer.</p>
+									</li>
+									<li>
+										<div class="armCodeBlock">
+											<p>
+												teq view,stop<br />
+												addne view,#2<br />
+											</p>
+										</div>
+										<p>
+											Increment the view pointer if necessary.</p>
+									</li>
+									<li>
+										<div class="armCodeBlock">
+											<p>
+												teq view,taddr<br />
+												subeq view,#128*128*2<br />
+											</p>
+										</div>
+										<p>
+											It's easy to check for view going past the end of the buffer because the end of
+											the buffer's address is stored in taddr.</p>
+									</li>
+									<li>
+										<div class="armCodeBlock">
+											<p>
+												add x,#8<br />
+												teq x,#1024<br />
+												bne xLoop$<br />
+											</p>
+										</div>
+										<p>
+											We increment x and then loop back if there are more characters to go.</p>
+									</li>
+								</ol>
+							</li>
+							<li>
+								<div class="armCodeBlock">
+									<p>
+										add y,#16<br />
+										teq y,#768<br />
+										bne yLoop$<br />
+									</p>
+								</div>
+								<p>
+									We increment y and then loop back if there are more characters to go.</p>
+							</li>
+						</ol>
+						<div class="armCodeBlock">
+							<p>
+								pop {r4,r5,r6,r7,r8,r9,r10,r11,pc}<br />
+								.unreq x<br />
+								.unreq y<br />
+								.unreq char<br />
+								.unreq col<br />
+								.unreq screen<br />
+								.unreq taddr<br />
+								.unreq view<br />
+								.unreq stop<br />
+							</p>
+						</div>
+						<p>
+							Don't forget to clean up at the end!</p>
+					</li>
+				</ol>
+				<h2 id="print">
+					3 Printing Lines</h2>
+				<p>
+					Now we have our TerminalDisplay method, which will automatically display the contents
+					of terminalBuffer to terminalScreen, so theoretically we can draw text. However,
+					we don't actually have any drawing routines that work on a character based display.
+					A quick method that will come in handy first of all is TerminalClear, which completely
+					clears the terminal. This can actually very easily be achieved with no loops. Try
+					to deduce why the following method suffices:</p>
+				<div class="armCodeBlock">
+					<p>
+						.globl TerminalClear<br />
+						TerminalClear:<br />
+						ldr r0,=terminalStart<br />
+						add r1,r0,#terminalBuffer-terminalStart<br />
+						str r1,[r0]<br />
+						str r1,[r0,#terminalStop-terminalStart]<br />
+						str r1,[r0,#terminalView-terminalStart]<br />
+						mov pc,lr<br />
+					</p>
+				</div>
+				<p>
+					Now we need to make a basic method for character based displays; the Print function.
+					This takes in a string address in r0, and a length in r1, and simply writes it to
+					the current location at the screen. There are a few special characters to be wary
+					of, as well as special behaviour to ensure that terminalView is kept up to date.
+					Let's analyse what it has to do:</p>
+				<ol>
+					<li>Check if string length is 0, if so return</li>
+					<li>Load in terminalStop and terminalView</li>
+					<li>Deduce the x-coordinate of terminalStop</li>
+					<li>For each character:
+						<ol>
+							<li>Check if the character is a new line</li>
+							<li>If so, increment bufferStop to the end of the line storing a black on black delete
+								character.</li>
+							<li>Otherwise, copy the character in the current terminalColour</li>
+							<li>Check if we're at the end of a line</li>
+							<li>If so, check if the number of characters between terminalView and terminalStop is
+								more than one screen</li>
+							<li>If so, increment terminalView by one line</li>
+							<li>Check if terminalView is at the end of the buffer, replace it with the start if
+								so</li>
+							<li>Check if terminalStop is at the end of the buffer, replace it with the start if
+								so</li>
+							<li>Check if terminalStop equals terminalStart, increment terminalStart by one line
+								if so</li>
+							<li>Check if terminalStart is at the end of the buffer, replace it with the start if
+								so</li>
+						</ol>
+					</li>
+					<li>Store back terminalStop and terminalView.</li>
+				</ol>
+				<p>
+					See if you can implement this yourself. My solution is provided below:</p>
+				<ol>
+					<li>
+						<div class="armCodeBlock">
+							<p>
+								.globl Print<br />
+								Print:<br />
+								teq r1,#0<br />
+								moveq pc,lr<br />
+							</p>
+						</div>
+						<p>
+							This quick check at the beginning makes a call to Print with a string of length 0
+							almost instant.</p>
+					</li>
+					<li>
+						<div class="armCodeBlock">
+							<p>
+								push {r4,r5,r6,r7,r8,r9,r10,r11,lr}<br />
+								bufferStart .req r4<br />
+								taddr .req r5<br />
+								x .req r6<br />
+								string .req r7<br />
+								length .req r8<br />
+								char .req r9<br />
+								bufferStop .req r10<br />
+								view .req r11<br />
+								<br />
+								mov string,r0<br />
+								mov length,r1<br />
+								<br />
+								ldr taddr,=terminalStart<br />
+								ldr bufferStop,[taddr,#terminalStop-terminalStart]<br />
+								ldr view,[taddr,#terminalView-terminalStart]<br />
+								ldr bufferStart,[taddr]<br />
+								add taddr,#terminalBuffer-terminalStart<br />
+								add taddr,#128*128*2<br />
+							</p>
+						</div>
+						<p>
+							I do a lot of setup here. bufferStart contains terminalStart, bufferStop contains
+							terminalStop, view contains terminalView, taddr is the address of the end of terminalBuffer.</p>
+					</li>
+					<li>
+						<div class="armCodeBlock">
+							<p>
+								and x,bufferStop,#0xfe<br />
+								lsr x,#1<br />
+							</p>
+						</div>
+						<p>
+							As per usual, a sneaky alignment trick makes everything easier. Because of the aligment
+							of terminalBuffer, the x-coordinate of any character address is simply the last
+							8 bits divided by 2.</p>
+					</li>
+					<li>
+						<ol>
+							<li>
+								<div class="armCodeBlock">
+									<p>
+										charLoop$:<br />
+										ldrb char,[string]<br />
+										and char,#0x7f<br />
+										teq char,#'\n'<br />
+										bne charNormal$<br />
+									</p>
+								</div>
+								<p>
+									We need to check for new lines.</p>
+							</li>
+							<li>
+								<div class="armCodeBlock">
+									<p>
+										mov r0,#0x7f<br />
+										clearLine$:<br />
+										strh r0,[bufferStop]<br />
+										add bufferStop,#2<br />
+										add x,#1<br />
+										teq x,#128 blt clearLine$<br />
+										<br />
+										b charLoopContinue$<br />
+									</p>
+								</div>
+								<p>
+									Loop until the end of the line, writing out 0x7f; a delete character in black on
+									a black background.</p>
+							</li>
+							<li>
+								<div class="armCodeBlock">
+									<p>
+										charNormal$:<br />
+										strb char,[bufferStop]<br />
+										ldr r0,=terminalColour<br />
+										ldrb r0,[r0]<br />
+										strb r0,[bufferStop,#1]<br />
+										add bufferStop,#2<br />
+										add x,#1<br />
+									</p>
+								</div>
+								<p>
+									Store the current character in the string and the terminalColour to the end of the
+									terminalBuffer and then increment it and x.</p>
+							</li>
+							<li>
+								<div class="armCodeBlock">
+									<p>
+										charLoopContinue$:<br />
+										cmp x,#128<br />
+										blt noScroll$<br />
+									</p>
+								</div>
+								<p>
+									Check if x is at the end of a line; 128.</p>
+							</li>
+							<li>
+								<div class="armCodeBlock">
+									<p>
+										mov x,#0<br />
+										subs r0,bufferStop,view<br />
+										addlt r0,#128*128*2<br />
+										cmp r0,#128*(768/16)*2<br />
+									</p>
+								</div>
+								<p>
+									Set x back to 0 and check if we're currently showing more than one screen. Remember,
+									we're using a circular buffer, so if the difference between bufferStop and view
+									is negative, we're actually wrapping around the buffer.</p>
+							</li>
+							<li>
+								<div class="armCodeBlock">
+									<p>
+										addge view,#128*2<br />
+									</p>
+								</div>
+								<p>
+									Add one lines worth of bytes to the view address.</p>
+							</li>
+							<li>
+								<div class="armCodeBlock">
+									<p>
+										teq view,taddr<br />
+										subeq view,taddr,#128*128*2<br />
+									</p>
+								</div>
+								<p>
+									If the view address is at the end of the buffer we subtract the buffer length from
+									it to move it back to the start. I set taddr to the address of the end of the buffer
+									at the beginning.</p>
+							</li>
+							<li>
+								<div class="armCodeBlock">
+									<p>
+										noScroll$:<br />
+										teq bufferStop,taddr<br />
+										subeq bufferStop,taddr,#128*128*2<br />
+									</p>
+								</div>
+								<p>
+									If the stop address is at the end of the buffer we subtract the buffer length from
+									it to move it back to the start. I set taddr to the address of the end of the buffer
+									at the beginning.</p>
+							</li>
+							<li>
+								<div class="armCodeBlock">
+									<p>
+										teq bufferStop,bufferStart<br />
+										addeq bufferStart,#128*2<br />
+									</p>
+								</div>
+								<p>
+									Check if bufferStop equals bufferStart. If so, add one line to bufferStart.</p>
+							</li>
+							<li>
+								<div class="armCodeBlock">
+									<p>
+										teq bufferStart,taddr<br />
+										subeq bufferStart,taddr,#128*128*2<br />
+									</p>
+								</div>
+								<p>
+									If the start address is at the end of the buffer we subtract the buffer length from
+									it to move it back to the start. I set taddr to the address of the end of the buffer
+									at the beginning.</p>
+							</li>
+						</ol>
+						<div class="armCodeBlock">
+							<p>
+								subs length,#1<br />
+								add string,#1<br />
+								bgt charLoop$<br />
+							</p>
+						</div>
+						<p>
+							Loop until the string is done.</p>
+					</li>
+					<li>
+						<div class="armCodeBlock">
+							<p>
+								charLoopBreak$:<br />
+								sub taddr,#128*128*2<br />
+								sub taddr,#terminalBuffer-terminalStart<br />
+								str bufferStop,[taddr,#terminalStop-terminalStart]<br />
+								str view,[taddr,#terminalView-terminalStart]<br />
+								str bufferStart,[taddr]<br />
+								<br />
+								pop {r4,r5,r6,r7,r8,r9,r10,r11,pc}<br />
+								.unreq bufferStart<br />
+								.unreq taddr<br />
+								.unreq x<br />
+								.unreq string<br />
+								.unreq length<br />
+								.unreq char<br />
+								.unreq bufferStop<br />
+								.unreq view<br />
+							</p>
+						</div>
+						<p>
+							Store back the variables and return.</p>
+					</li>
+				</ol>
+				<p>
+					This method allows us to print arbitrary text to the screen. Throughout, I've been
+					using the colour variable, but no where have we actually set it. Normally, terminals
+					use special combinations of characters to change the colour. For example ASCII Escape
+					(1b<sub>16</sub>) followed by a number 0 to f in hexadecimal could set the foreground
+					colour to that CGA colour number. You can try implementing this yourself; my version
+					is in the further examples section on the download page.</p>
+				<h2 id="userinput">
+					4 Standard Input</h2>
+					<div class="informationBox"><p>By convention, in many programming languages, every program has access
+					to stdin and stdout, which are an input and and output stream linked to the terminal. This is still true on
+					graphical programs, though many don't use it.</p></div>
+				<p>
+					Now we have an output terminal that in theory can print out text and display it.
+					That is only half the story however, we want input. We want to implement a method,
+					ReadLine, which stores the next line of text a user types to a location given in
+					r0, up to a maximum length given in r1, and returns the length of the string read
+					in r0. The tricky thing is, the user annoyingly wants to see what they're typing
+					as they type it, they want to use backspace to delete mistakes and they want to
+					use return to submit commands. They probably even want a flashing underscore character
+					to indicate the computer would like input! These perfectly reasonable requests make
+					this method a real challenge. One way to achieve all of this is to store the text
+					they type in memory somewhere along with its length, and then after every character,
+					move the terminalStop address back to where it started when ReadLine was called
+					and calling Print. This means we only have to be able to manipulate a string in
+					memory, and then make use of our Print function.</p>
+				<p>
+					Lets have a look at what ReadLine will do:</p>
+				<ol>
+					<li>If the maximum length is 0, return 0</li>
+					<li>Retrieve the current values of terminalStop and terminalView</li>
+					<li>If the maximum length is bigger than half the buffer size, set it to half the buffer
+						size</li>
+					<li>Subtract one from maximum length to ensure it can store our flashing underscore
+						or a null terminator</li>
+					<li>Write an underscore to the string</li>
+					<li>Write the stored terminalView and terminalStop addresses back to the memory</li>
+					<li>Call Print on the current string</li>
+					<li>Call TerminalDisplay</li>
+					<li>Call KeyboardUpdate</li>
+					<li>Call KeyboardGetChar</li>
+					<li>If it is a new line character go to 16</li>
+					<li>If it is a backspace character, subtract 1 from the length of the string (if it
+						is &gt; 0)</li>
+					<li>If it is an ordinary character, write it to the string (if the length &lt; maximum
+						length)</li>
+					<li>If the string ends in an underscore, write a space, otherwise write an underscore</li>
+					<li>Go to 6</li>
+					<li>Write a new line character to the end of the string</li>
+					<li>Call Print and TerminalDisplay</li>
+					<li>Replace the new line with a null terminator</li>
+					<li>Return the length of the string</li>
+				</ol>
+				<p>
+					Convince yourself that this will work, and then try to implement it yourself. My
+					implementation is given below:</p>
+				<ol>
+					<li>
+						<div class="armCodeBlock">
+							<p>
+								.globl ReadLine<br />
+								ReadLine:<br />
+								teq r1,#0<br />
+								moveq r0,#0<br />
+								moveq pc,lr<br />
+							</p>
+						</div>
+						<p>
+							Quick special handling for the zero case, which is otherwise difficult.</p>
+					</li>
+					<li>
+						<div class="armCodeBlock">
+							<p>
+								string .req r4<br />
+								maxLength .req r5<br />
+								input .req r6<br />
+								taddr .req r7<br />
+								length .req r8<br />
+								view .req r9<br />
+								<br />
+								push {r4,r5,r6,r7,r8,r9,lr}<br />
+								<br />
+								mov string,r0<br />
+								mov maxLength,r1<br />
+								ldr taddr,=terminalStart<br />
+								ldr input,[taddr,#terminalStop-terminalStart]<br />
+								ldr view,[taddr,#terminalView-terminalStart]<br />
+								mov length,#0<br />
+							</p>
+						</div>
+						<p>
+							As per the general theme, I do a lot of initialisations early. input contains the
+							value of terminalStop and view contains terminalView. Length starts at 0.</p>
+					</li>
+					<li>
+						<div class="armCodeBlock">
+							<p>
+								cmp maxLength,#128*64<br />
+								movhi maxLength,#128*64<br />
+							</p>
+						</div>
+						<p>
+							We have to check for unusually large reads, as we can't process them beyond the
+							size of the terminalBuffer (I suppose we CAN, but it would be very buggy, as terminalStart
+							could move past the stored terminalStop).</p>
+					</li>
+					<li>
+						<div class="armCodeBlock">
+							<p>
+								sub maxLength,#1<br />
+							</p>
+						</div>
+						<p>
+							Since the user wants a flashing cursor, and we ideally want to put a null terminator
+							on this string, we need 1 spare character.</p>
+					</li>
+					<li>
+						<div class="armCodeBlock">
+							<p>
+								mov r0,#'_'<br />
+								strb r0,[string,length]<br />
+							</p>
+						</div>
+						<p>
+							Write out the underscore to let the user know they can input.</p>
+					</li>
+					<li>
+						<div class="armCodeBlock">
+							<p>
+								readLoop$:<br />
+								str input,[taddr,#terminalStop-terminalStart]<br />
+								str view,[taddr,#terminalView-terminalStart]<br />
+							</p>
+						</div>
+						<p>
+							Save the stored terminalStop and terminalView. This is important to reset the terminal
+							after each call to Print, which changes these variables. Strictly speaking it can
+							change terminalStart too, but this is irreversible.</p>
+					</li>
+					<li>
+						<div class="armCodeBlock">
+							<p>
+								mov r0,string<br />
+								mov r1,length<br />
+								add r1,#1<br />
+								bl Print<br />
+							</p>
+						</div>
+						<p>
+							Write the current input. We add 1 to the length for the underscore.</p>
+					</li>
+					<li>
+						<div class="armCodeBlock">
+							<p>
+								bl TerminalDisplay<br />
+							</p>
+						</div>
+						<p>
+							Copy the new text to the screen.</p>
+					</li>
+					<li>
+						<div class="armCodeBlock">
+							<p>
+								bl KeyboardUpdate<br />
+							</p>
+						</div>
+						<p>
+							Fetch the latest keyboard input.</p>
+					</li>
+					<li>
+						<div class="armCodeBlock">
+							<p>
+								bl KeyboardGetChar<br />
+							</p>
+						</div>
+						<p>
+							Retrieve the key pressed.</p>
+					</li>
+					<li>
+						<div class="armCodeBlock">
+							<p>
+								teq r0,#'\n'<br />
+								beq readLoopBreak$<br />
+								teq r0,#0<br />
+								beq cursor$<br />
+								teq r0,#'\b'<br />
+								bne standard$<br />
+							</p>
+						</div>
+						<p>
+							Break out of the loop if we have an enter key. Also skip these conditions if we
+							have a null terminator and process a backspace if we have one.</p>
+					</li>
+					<li>
+						<div class="armCodeBlock">
+							<p>
+								delete$:<br />
+								cmp length,#0<br />
+								subgt length,#1<br />
+								b cursor$<br />
+							</p>
+						</div>
+						<p>
+							Remove one from the length to delete a character.</p>
+					</li>
+					<li>
+						<div class="armCodeBlock">
+							<p>
+								standard$:<br />
+								cmp length,maxLength<br />
+								bge cursor$<br />
+								strb r0,[string,length]<br />
+								add length,#1<br />
+							</p>
+						</div>
+						<p>
+							Write out an ordinary character where possible.</p>
+					</li>
+					<li>
+						<div class="armCodeBlock">
+							<p>
+								cursor$:<br />
+								ldrb r0,[string,length]<br />
+								teq r0,#'_'<br />
+								moveq r0,#' '<br />
+								movne r0,#'_'<br />
+								strb r0,[string,length]<br />
+							</p>
+						</div>
+						<p>
+							Load in the last character, and change it to an underscore if it isn't one, and
+							a space if it is.</p>
+					</li>
+					<li>
+						<div class="armCodeBlock">
+							<p>
+								b readLoop$<br />
+								readLoopBreak$:<br />
+							</p>
+						</div>
+						<p>
+							Loop until the user presses enter.</p>
+					</li>
+					<li>
+						<div class="armCodeBlock">
+							<p>
+								mov r0,#'\n'<br />
+								strb r0,[string,length]<br />
+							</p>
+						</div>
+						<p>
+							Store a new line at the end of the string.</p>
+					</li>
+					<li>
+						<div class="armCodeBlock">
+							<p>
+								str input,[taddr,#terminalStop-terminalStart]<br />
+								str view,[taddr,#terminalView-terminalStart]<br />
+								mov r0,string<br />
+								mov r1,length<br />
+								add r1,#1<br />
+								bl Print<br />
+								bl TerminalDisplay<br />
+							</p>
+						</div>
+						<p>
+							Reset the terminalView and terminalStop and then Print and TerminalDisplay the final
+							input.</p>
+					</li>
+					<li>
+						<div class="armCodeBlock">
+							<p>
+								mov r0,#0<br />
+								strb r0,[string,length]<br />
+							</p>
+						</div>
+						<p>
+							Write out the null terminator.</p>
+					</li>
+					<li>
+						<div class="armCodeBlock">
+							<p>
+								mov r0,length<br />
+								pop {r4,r5,r6,r7,r8,r9,pc}<br />
+								.unreq string<br />
+								.unreq maxLength<br />
+								.unreq input<br />
+								.unreq taddr<br />
+								.unreq length<br />
+								.unreq view<br />
+							</p>
+						</div>
+						<p>
+							Return the length.</p>
+					</li>
+				</ol>
+				<h2 id="terminator">
+					5 The Terminal: Rise of the Machine</h2>
+				<p>
+					So, now we can theoretically interact with the user on the terminal. The most obvious
+					thing to do is to put this to the test! In 'main.s' delete everything after <span
+						class="armCodeInline">bl UsbInitialise</span> and copy in the following code:</p>
+				<div class="armCodeBlock">
+					<p>
+						reset$:<br />
+					</p>
+					<div class="indent">
+						<p>
+							mov sp,#0x8000<br />
+							bl TerminalClear<br />
+							<br />
+							ldr r0,=welcome<br />
+							mov r1,#welcomeEnd-welcome<br />
+							bl Print<br />
+						</p>
+					</div>
+					<p>
+						loop$:<br />
+					</p>
+					<div class="indent">
+						<p>
+							ldr r0,=prompt<br />
+							mov r1,#promptEnd-prompt<br />
+							bl Print<br />
+							<br />
+							ldr r0,=command<br />
+							mov r1,#commandEnd-command<br />
+							bl ReadLine<br />
+							<br />
+							teq r0,#0<br />
+							beq loopContinue$<br />
+							<br />
+							mov r4,r0<br />
+							<br />
+							ldr r5,=command<br />
+							ldr r6,=commandTable<br />
+							<br />
+							ldr r7,[r6,#0]<br />
+							ldr r9,[r6,#4]<br />
+							commandLoop$:<br />
+						</p>
+						<div class="indent">
+							<p>
+								ldr r8,[r6,#8]<br />
+								sub r1,r8,r7<br />
+								<br />
+								cmp r1,r4<br />
+								bgt commandLoopContinue$<br />
+								<br />
+								mov r0,#0<br />
+								commandName$:<br />
+							</p>
+							<div class="indent">
+								<p>
+									ldrb r2,[r5,r0]<br />
+									ldrb r3,[r7,r0]<br />
+									teq r2,r3<br />
+									bne commandLoopContinue$<br />
+									add r0,#1<br />
+									teq r0,r1<br />
+									bne commandName$<br />
+									<br />
+								</p>
+							</div>
+							<p>
+								ldrb r2,[r5,r0]<br />
+								teq r2,#0<br />
+								teqne r2,#' '<br />
+								bne commandLoopContinue$<br />
+								<br />
+								mov r0,r5<br />
+								mov r1,r4<br />
+								mov lr,pc<br />
+								mov pc,r9<br />
+								b loopContinue$<br />
+								<br />
+							</p>
+						</div>
+						<p>
+							commandLoopContinue$:<br />
+						</p>
+						<div class="indent">
+							<p>
+								add r6,#8<br />
+								mov r7,r8<br />
+								ldr r9,[r6,#4]<br />
+								teq r9,#0<br />
+								bne commandLoop$<br />
+								<br />
+							</p>
+						</div>
+						<p>
+							ldr r0,=commandUnknown<br />
+							mov r1,#commandUnknownEnd-commandUnknown<br />
+							ldr r2,=formatBuffer<br />
+							ldr r3,=command<br />
+							bl FormatString<br />
+							<br />
+							mov r1,r0<br />
+							ldr r0,=formatBuffer<br />
+							bl Print<br />
+							<br />
+						</p>
+					</div>
+					<p>
+						loopContinue$:<br />
+					</p>
+					<div class="indent">
+						<p>
+							bl TerminalDisplay<br />
+							b loop$<br />
+							<br />
+						</p>
+					</div>
+					<p>
+						echo:<br />
+					</p>
+					<div class="indent">
+						<p>
+							cmp r1,#5<br />
+							movle pc,lr<br />
+							<br />
+							add r0,#5<br />
+							sub r1,#5
+							<br />
+							b Print<br />
+							<br />
+						</p>
+					</div>
+					<p>
+						ok:<br />
+					</p>
+					<div class="indent">
+						<p>
+							teq r1,#5<br />
+							beq okOn$<br />
+							teq r1,#6<br />
+							beq okOff$<br />
+							mov pc,lr<br />
+							<br />
+							okOn$:<br />
+						</p>
+						<div class="indent">
+							<p>
+								ldrb r2,[r0,#3]<br />
+								teq r2,#'o'<br />
+								ldreqb r2,[r0,#4]<br />
+								teqeq r2,#'n'<br />
+								movne pc,lr<br />
+								mov r1,#0<br />
+								b okAct$<br />
+							</p>
+						</div>
+						<p>
+							<br />
+							okOff$:<br />
+						</p>
+						<div class="indent">
+							<p>
+								ldrb r2,[r0,#3]<br />
+								teq r2,#'o'<br />
+								ldreqb r2,[r0,#4]<br />
+								teqeq r2,#'f'<br />
+								ldreqb r2,[r0,#5]<br />
+								teqeq r2,#'f'<br />
+								movne pc,lr<br />
+								mov r1,#1<br />
+							</p>
+						</div>
+						<p>
+							<br />
+							okAct$:<br />
+						</p>
+						<div class="indent">
+							<p>
+								mov r0,#16<br />
+								b SetGpio<br />
+							</p>
+						</div>
+					</div>
+					<p>
+						<br />
+						.section .data<br />
+						.align 2<br />
+						welcome: .ascii "Welcome to Alex's OS - Everyone's favourite OS"<br />
+						welcomeEnd:<br />
+						.align 2<br />
+						prompt: .ascii "\n> "<br />
+						promptEnd:<br />
+						.align 2<br />
+						command:<br />
+					</p>
+					<div class="indent">
+						<p>
+							.rept 128<br />
+						</p>
+						<div class="indent">
+							<p>
+								.byte 0<br />
+							</p>
+						</div>
+						<p>
+							.endr<br />
+						</p>
+					</div>
+					<p>
+						commandEnd:<br />
+						.byte 0<br />
+						.align 2<br />
+						commandUnknown: .ascii "Command `%s' was not recognised.\n"<br />
+						commandUnknownEnd:<br />
+						.align 2<br />
+						formatBuffer:<br />
+					</p>
+					<div class="indent">
+						<p>
+							.rept 256<br />
+						</p>
+						<div class="indent">
+							<p>
+								.byte 0<br />
+							</p>
+						</div>
+						<p>
+							.endr<br />
+						</p>
+					</div>
+					<p>
+						formatEnd:<br />
+						<br />
+						.align 2<br />
+						commandStringEcho: .ascii "echo"<br />
+						commandStringReset: .ascii "reset"<br />
+						commandStringOk: .ascii "ok"<br />
+						commandStringCls: .ascii "cls"<br />
+						commandStringEnd:<br />
+						<br />
+						.align 2<br />
+						commandTable:<br />
+						.int commandStringEcho, echo<br />
+						.int commandStringReset, reset$<br />
+						.int commandStringOk, ok<br />
+						.int commandStringCls, TerminalClear<br />
+						.int commandStringEnd, 0<br />
+					</p>
+				</div>
+				<p>
+					This code brings everything together into a simple command line operating system.
+					The commands available are echo, reset, ok and cls. echo copies any text after it
+					back to the terminal, reset resets the operating system if things go wrong, ok has
+					two functions: ok on turns the OK LED on, and ok off turns the OK LED off, and cls
+					clears the terminal using TerminalClear.</p>
+				<p>
+					Have a go with this code on the Raspberry Pi. If it doesn't work, please see our
+					troubleshooting page.</p>
+				<p>
+					When it works, congratulations you've completed a basic terminal Operating System,
+					and have completed the input series. Unfortunately, this is as far as these tutorials
+					go at the moment, but I hope to make more in the future. Please send feedback to
+					<a href="mailto:awc32@cam.ac.uk">awc32@cam.ac.uk</a>.</p>
+				<p>
+					You're now in position to start building some simple terminal Operating Systems.
+					My code above builds up a table of available commands in commandTable. Each entry
+					in the table is an int for the address of the string, and an int for the address
+					of the code to run. The last entry has to be commandStringEnd, 0. Try implementing
+					some of your own commands, using our existing functions, or making new ones. The
+					parameters for the functions to run are r0 is the address of the command the user
+					typed, and r1 is the length. You can use this to pass inputs to your commands. Maybe
+					you could make a calculator program, perhaps a drawing program or a chess program.
+					Whatever ideas you've got, give them a go!</p>
+			</div>
+			<div id="pageFooter">
+			<hr />
+			<p><a rel="license" href="http://creativecommons.org/licenses/by-sa/3.0/deed.en_GB"><img alt="Creative Commons Licence" style="border-width:0" src="http://i.creativecommons.org/l/by-sa/3.0/88x31.png" /></a><br /><span xmlns:dct="http://purl.org/dc/terms/" property="dct:title">Baking Pi: Operating Systems Development</span> by <span xmlns:cc="http://creativecommons.org/ns#" property="cc:attributionName">Alex Chadwick</span> is licensed under a <a rel="license" href="http://creativecommons.org/licenses/by-sa/3.0/deed.en_GB">Creative Commons Attribution-ShareAlike 3.0 Unported License</a>.</p>
+			</div>
+		</div>
+	</div>
+</body>
+</html>

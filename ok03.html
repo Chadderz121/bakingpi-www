@@ -1,0 +1,813 @@
+﻿<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml">
+<head>
+	<title>Lesson 3 OK03</title>
+	<link href="../stylesheet.css" rel="Stylesheet" type="text/css" />
+	<script language="javascript" type="text/javascript" src="../script.js"></script>
+</head>
+<body>
+	<div id="contentAll">
+		<div id="courseHead">
+			<h1>
+				Lesson 3 OK03</h1>
+		</div>
+		<div id="pageAll">
+			<div id="pageBody">
+				<p>
+					The OK03 lesson builds on OK02 by teaching how to use functions in assembly to make
+					more reusable and rereadable code. It is assumed you have the code for the <a href="ok02.html">
+						Lesson 2: OK02</a> operating system as a basis.
+				</p>
+				<div class="ucampas-toc">
+				</div>
+				<h2 id="reusable">
+					1 Reusable Code</h2>
+				<p>
+					So far we've made code for our operating system by typing the things we want to
+					happen in order. This is fine for such tiny programs, but if we wrote the whole
+					system like this, the code would be completely unreadable. Instead we use functions.</p>
+				<div class="expandableHeader" onclick="return ExpandToggle('functions')">
+					<p>
+						<a class="icon-more">Functions explained</a></p>
+				</div>
+				<div id="functions" class="expandable">
+					<p>
+						A function is a piece of code that can be reused to compute a certain kind of answer,
+						or perform a certain action. You may also hear them called procedures, routines
+						or subroutines. Although these are all different, people rarely use the correct
+						term.</p>
+					<p>
+						You should already be happy with the concept of a function from mathematics. For
+						example the cosine function applied to a number gives another number between -1
+						and 1 which is the cosine of the angle. Notationally we write cos(x) to be the cosine
+						function applied to the value x.
+					</p>
+					<p>
+						In code, functions can take multiple inputs (including none), give multiple outputs
+						(including none), and may cause side effects. For example a function might create
+						a file on the file system, named after the first input, with length based on the
+						second.</p>
+				</div>
+				<img alt="Function as black boxes" src="images/functions.png" class="marginDiagram" />
+				<div class="informationBox"><p>Functions are
+					said to be 'black boxes'. We put inputs in, and outputs come out, but we don't need
+					to know how they work.</div>
+				<p>
+					In higher level code such as C or C++, functions are part of the language itself.
+					In assembly code, functions are just ideas we have.
+				</p>
+				<p>
+					Ideally we want to be able to set our registers to some input values, branch to
+					an address, and expect that at some point the code will branch back to our code
+					having set the registers to output values. This is what a function is in assembly
+					code. The difficulty comes in what system we use for setting the registers. If we
+					just used any system we felt like, each programmer may use a different system, and
+					would find other programmers' work hard to understand. Further, compilers would
+					not be able to work with assembly code as easily, as they would not know how to
+					use the functions. To prevent confusion, a standard called the Application Binary
+					Interface (ABI) was devised for each assembly language which is an agreement on
+					how functions should be run. If everyone makes functions in the same way, then everyone
+					will be able to use each others' functions. I will teach that standard here, and from
+					now on I will code all of my functions to meet the standard.</p>
+				<p>
+					The standard says that r0,r1,r2 and r3 will be used as inputs to a function in order.
+					If a function needs no inputs, then it doesn't matter what value it takes. If it
+					needs only one it always goes in r0, if it needs two, the first goes in r0, and
+					the second goes on r1, and so on. The output will always be in r0. If a function
+					has no output, it doesn't matter what value r0 takes.</p>
+				<p>
+					Further, it also requires that after a function is run, r4 to r12 must have the
+					same values as they had when the function started. This means that when you call
+					a function, you can be sure the r4 to r12 will not change value, but you cannot
+					be so sure about r0 to r3.</p>
+				<p>
+					When a function completes it has to branch back to the code that started it. This
+					means it must know the address of the code that started it. To facilitate this,
+					there is a special register called lr (link register) which always holds the address
+					of the instruction after the one that called this function.</p>
+				<table>
+					<caption>
+						Table 1.1 ARM ABI register usage</caption>
+					<thead>
+						<tr>
+							<th>
+								Register
+							</th>
+							<th>
+								Brief
+							</th>
+							<th>
+								Preserved
+							</th>
+							<th>
+								Rules
+							</th>
+						</tr>
+					</thead>
+					<tr class="highlightRow1">
+						<td>
+							r0
+						</td>
+						<td>
+							Argument and result
+						</td>
+						<td>
+							No
+						</td>
+						<td rowspan="2">
+							r0 and r1 are used for passing the first two arguments to functions, and returning
+							the results of functions. If a function does not use them for a return value, they
+							can take any value after a function.
+						</td>
+					</tr>
+					<tr class="highlightRow1">
+						<td>
+							r1
+						</td>
+						<td>
+							Argument and result
+						</td>
+						<td>
+							No
+						</td>
+					</tr>
+					<tr>
+						<td>
+							r2
+						</td>
+						<td>
+							Argument
+						</td>
+						<td>
+							No
+						</td>
+						<td rowspan="2">
+							r2 and r3 are used for passing the second two arguments to functions. There values
+							after a function is called can be anything.
+						</td>
+					</tr>
+					<tr>
+						<td>
+							r3
+						</td>
+						<td>
+							Argument
+						</td>
+						<td>
+							No
+						</td>
+					</tr>
+					<tr class="highlightRow1">
+						<td>
+							r4
+						</td>
+						<td>
+							General purpose
+						</td>
+						<td>
+							Yes
+						</td>
+						<td rowspan="9">
+							r4 to r12 are used for working values, and their value after a function is called
+							must be the same as before.
+						</td>
+					</tr>
+					<tr class="highlightRow1">
+						<td>
+							r5
+						</td>
+						<td>
+							General purpose
+						</td>
+						<td>
+							Yes
+						</td>
+					</tr>
+					<tr class="highlightRow1">
+						<td>
+							r6
+						</td>
+						<td>
+							General purpose
+						</td>
+						<td>
+							Yes
+						</td>
+					</tr>
+					<tr class="highlightRow1">
+						<td>
+							r7
+						</td>
+						<td>
+							General purpose
+						</td>
+						<td>
+							Yes
+						</td>
+					</tr>
+					<tr class="highlightRow1">
+						<td>
+							r8
+						</td>
+						<td>
+							General purpose
+						</td>
+						<td>
+							Yes
+						</td>
+					</tr>
+					<tr class="highlightRow1">
+						<td>
+							r9
+						</td>
+						<td>
+							General purpose
+						</td>
+						<td>
+							Yes
+						</td>
+					</tr>
+					<tr class="highlightRow1">
+						<td>
+							r10
+						</td>
+						<td>
+							General purpose
+						</td>
+						<td>
+							Yes
+						</td>
+					</tr>
+					<tr class="highlightRow1">
+						<td>
+							r11
+						</td>
+						<td>
+							General purpose
+						</td>
+						<td>
+							Yes
+						</td>
+					</tr>
+					<tr class="highlightRow1">
+						<td>
+							r12
+						</td>
+						<td>
+							General purpose
+						</td>
+						<td>
+							Yes
+						</td>
+					</tr>
+					<tr>
+						<td>
+							lr
+						</td>
+						<td>
+							Return address
+						</td>
+						<td>
+							No
+						</td>
+						<td>
+							lr is the address to branch back to when a function is finished, but this does have
+							to contain the same address after the function has finished.
+						</td>
+					</tr>
+					<tr class="highlightRow1">
+						<td>
+							sp
+						</td>
+						<td>
+							Stack pointer
+						</td>
+						<td>
+							Yes
+						</td>
+						<td>
+							sp is the stack pointer, described below. Its value must be the same after the function
+							has finished.
+						</td>
+					</tr>
+				</table>
+				<p>
+					Often functions need to use more registers than just r0 to r3. But, since r4 to
+					r12 must stay the same after the method has run, they must be saved somewhere. We
+					save them on something called the stack.</p>
+				<div class="expandableHeader" onclick="return ExpandToggle('stack')"><p><a class="icon-more">Stack explained</a></p></div>
+				<div id="stack" class="expandable">
+					<img class="sideDiagram" alt="Stack diagram" src="images/stack.png" />
+					<p>
+						A stack is a metaphor we use in computing for a method of storing values. Just like
+						in a stack of plates, you can only remove items from the top of a stack, and only
+						add items to the top of the stack.</p>
+					<p>
+						The stack is a brilliant idea for storing registers on when functions are running.
+						For example if I have a function which needs to use registers r4 and r5, it could
+						place the current values of those registers on a stack. At the end of the method
+						it could take them back off again. What is most clever is that if my function had
+						to run another function in order to complete and that function needed to save some
+						registers, it could put those on the top of the stack while it ran, and then take
+						them off again at the end. That wouldn't affect the values of r4 and r5 that my
+						method had to save, as they would be added to the top of the stack, and then taken
+						off again.</p>
+					<p>
+						The terminology we used to refer to the values put on the stack by a particular
+						method is that methods 'stack frame'. Not every method needs a stack frame, some
+						don't need to store values.</p>
+				</div>
+				<p>
+					Because the stack is so useful, it has been implemented in the ARMv6 instruction
+					set directly. A special register called sp (stack pointer) holds the address of
+					the stack. When items are added to the stack, the sp register updates so that it
+					always holds the address of the first item on the stack. <span class="armCodeInline">
+						push {r4,r5}</span> would put the values in r4 and r5 onto the top of the stack
+					and <span class="armCodeInline">pop {r4,r5}</span> would take them back off again
+					(in the correct order).</p>
+				<h2 id="firstfunction">
+					2 Our First Function</h2>
+				<p>
+					Now that we have some idea about how functions work, let's try to make one. For
+					a basic first example, we are going to make a function that takes no input, and
+					gives an output of the GPIO address. In the last lesson, we just wrote in this value,
+					but it would be better as a function, since it is something we might need to do
+					often in a real operating system, and we might not always remember the address.</p>
+				<p>
+					Copy the following code into a new file called 'gpio.s'. Just make the new file
+					in the 'source' directory with 'main.s'. We're going to put all functions related
+					to the GPIO controller in one file to make them easier to find.</p>
+				<div class="armCodeBlock"><p>
+					.globl GetGpioAddress<br />
+					GetGpioAddress:<br />
+					ldr r0,=0x20200000<br />
+					mov pc,lr<br />
+				</div>
+				<div class="commandBox"><p>
+					<span class="armCodeInline">.globl lbl</span> makes the label <span class="armCodeInline">
+						lbl </span>accessible from other files.</div>
+				<div class="commandBox"><p>
+					<span class="armCodeInline">mov reg1,reg2</span> copies the value in <span class="armCodeInline">
+						reg2</span> into <span class="armCodeInline">reg1</span>.</div>
+				<p>
+					This is a very simple complete function. The <span class="armCodeInline">.globl GetGpioAddress</span>
+					command is a message to the assembler to make the label <span class="armCodeInline">
+						GetGpioAddress</span> accessible to all files. This means that in our main.s
+					file we can branch to the label <span class="armCodeInline">GetGpioAddress</span>
+					even though it is not defined in that file.</p>
+				<p>
+					You should recognise the <span class="armCodeInline">ldr r0,=0x20200000</span> command,
+					which stores the GPIO controller address in r0. Since this is a function, we have
+					to give the output in r0, so we are not as free to use any register as we once were.</p>
+				<p>
+					<span class="armCodeInline">mov pc,lr</span> copies the value in <span class="armCodeInline">
+						lr</span> to <span class="armCodeInline">pc</span>. As mentioned earlier <span class="armCodeInline">
+							lr</span> always contains the address of the code that we have to go back
+					to when a method finishes. <span class="armCodeInline">pc</span> is a special register
+					which always contains the address of the next instruction to be run. A normal branch
+					command just changes the value of this register. By copying the value in <span class="armCodeInline">
+						lr</span> to <span class="armCodeInline">pc</span> we just change the next line
+					to be run to be the one we were told to go back to.</p>
+				<p>
+					A reasonable question would now be, how would we actually run this code? A special
+					type of branch <span class="armCodeInline">bl</span> does what we need. It branches
+					to a label like a normal branch, but before it does it updates <span class="armCodeInline">
+						lr</span> to contain the address of the line after the branch. That means that
+					when the function finishes, the line it will go back to will be the one after the
+					<span class="armCodeInline">bl</span> command. This makes a function running just
+					look like any other command, it simply runs, does whatever it needs to do, and then
+					carries on to the next line. This is a really useful way of thinking about functions.
+					We treat them as 'black boxes' in that when we use them, we don't need to think
+					about how they work, we just need to know what inputs they need, and what outputs
+					they give.</p>
+				<p>
+					For now, don't worry about using the function, we will use it in the next section.</p>
+				<h2 id="bigfunction">
+					3 A Big Function</h2>
+				<p>
+					Now we're going to implement a bigger function. Our first job was to enable output
+					on GPIO pin 16. It would be nice if this was a function. We could simply specify
+					a pin and a function as the input, and the function would set the function of that
+					pin to that value. That way, we could use the code to control any GPIO pin, not
+					just the LED.</p>
+				<p>
+					Copy the following commands below the GetGpioAddress function in gpio.s.</p>
+				<div class="armCodeBlock"><p>
+					.globl SetGpioFunction<br />
+					SetGpioFunction:<br />
+					cmp r0,#53<br />
+					cmpls r1,#7<br />
+					movhi pc,lr<br />
+				</div>
+				<div class="commandBox"><p>
+					Suffix <span class="armCodeInline">ls</span> causes the command to be executed only
+					if the last comparison determined that the first number was less than or the same
+					as the second. Unsigned.</div>
+				<div class="commandBox"><p>
+					Suffix <span class="armCodeInline">hi</span> causes the command to be executed only
+					if the last comparison determined that the first number was higher than the second.
+					Unsigned.</div>
+				<p>
+					One of the first things we should always think about when writing functions is our
+					inputs. What do we do if they are wrong? In this function, we have one input which
+					is a GPIO pin number, and so must be a number between 0 and 53, since there are
+					54 pins. Each pin has 8 functions, numbered 0 to 7 and so the function code must
+					be too. We could just assume that the inputs will be correct, but this is very dangerous
+					when working with hardware, as incorrect values could cause very bad side effects.
+					Therefore, in this case, we wish to make sure the inputs are in the right ranges.</p>
+				<p>
+					To do this we need to check that r0 &lt;= 53 and r1 &lt;= 7. First of all, we can
+					use the comparison we've seen before to compare the value of r0 with 53. The next
+					instruction, <span class="armCodeInline">cmpls</span> is a normal comparison instruction
+					that will only be run if r0 was lower than or the same as 53. If that was the case,
+					it compares r1 with 7, otherwise the result of the comparison is the same as before.
+					Finally we go back to the code that ran the function if the result of the last comparison
+					was that the register was higher than the number.
+				</p>
+				<p>
+					The effect of this is exactly what we want. If r0 was bigger than 53, then the <span
+						class="armCodeInline">cmpls</span> command doesn't run, but the <span class="armCodeInline">
+							movhi</span> does. If r0 is &lt;= 53, then the <span class="armCodeInline">cmpls</span>
+					command does run, and so <span class="armCodeInline">r1</span> is compared with
+					7, and then if it is higher than 7, <span class="armCodeInline">movhi</span> is
+					run, and the function ends, otherwise <span class="armCodeInline">movhi</span> does
+					not run, and we know for sure that r0 &lt;= 53 and r1 &lt;= 7.</p>
+				<p>
+					There is a subtle difference between the <span class="armCodeInline">ls</span> (lower
+					or same) and <span class="armCodeInline">le</span> (less or equal) as well as between
+					<span class="armCodeInline">hi</span> (higher) and <span class="armCodeInline">gt</span>
+					(greater) suffixes, but I will cover this later.</p>
+				<p>
+					Copy these commands below the above.</p>
+				<div class="armCodeBlock"><p>
+					push {lr}<br />
+					mov r2,r0<br />
+					bl GetGpioAddress<br />
+				</div>
+				<div class="commandBox"><p>
+					<span class="armCodeInline">push {reg1,reg2,...}</span> copies the registers in
+					the list <span class="armCodeInline">reg1,reg2,...</span> onto the top of the stack.
+					Only general purpose registers and lr can be pushed.</div>
+				<div class="commandBox"><p>
+					<span class="armCodeInline">bl lbl</span> sets <span class="armCodeInline">lr</span>
+					to the address of the next instruction and then branches to the label <span class="armCodeInline">
+						lbl</span>.</div>
+				<p>
+					These next three commands are focused on calling our first method. The <span class="armCodeInline">
+						push {lr}</span> command copies the value in <span class="armCodeInline">lr</span>
+					onto the top of the stack, so that we can retrieve it later. We must do this because
+					when we call GetGpioAddress, we will need to use <span class="armCodeInline">lr</span>
+					to store the address to come back to in our function.</p>
+				<p>
+					If we did not know anything about the GetGpioAddress function, we would have to
+					assume it changes r0,r1,r2 and r3, and would have to move our values to r4 and r5
+					to keep them the same after it finishes. Fortunately, we do know about GetGpioAddress,
+					and we know it only changes r0 to the address, it doesn't affect r1,r2 or r3. Thus,
+					we only have to move the GPIO pin number out of r0 so it doesn't get overwritten,
+					but we know we can safely move it to r2, as GetGpioAddress doesn't change r2.</p>
+				<p>
+					Finally we use the <span class="armCodeInline">bl</span> instruction to run GetGpioAddress.
+					Normally we use the term 'call' for running a function, and I will from now. As
+					discussed earlier <span class="armCodeInline">bl</span> calls a function by updating
+					the lr to the next instruction's address, and then branching to the function.</p>
+				<p>
+					When a function ends we say it has 'returned'. When the call to GetGpioAddress returns,
+					we now know that r0 contains the GPIO address, r1 contains the function code and
+					r2 contains the GPIO pin number. I mentioned earlier that the GPIO functions are
+					stored in blocks of 10, so first we need to determine which block of ten our pin
+					number is in. This sounds like a job we would use a division for, but divisions
+					are very slow indeed, so it is better for such small numbers to do repeated subtraction.</p>
+				<p>
+					Copy the following code below the above.</p>
+				<div class="armCodeBlock"><p>
+					functionLoop$:<br />
+					<div class="indent"><p>
+						cmp r2,#9<br />
+						subhi r2,#10<br />
+						addhi r0,#4<br />
+						bhi functionLoop$<br />
+					</div>
+				</div>
+				<div class="commandBox"><p>
+					<span class="armCodeInline">add reg,#val</span> adds the number <span class="armCodeInline">
+						val</span> to the contents of the register <span class="armCodeInline">reg</span>.</div>
+				<p>
+					This simple loop code compares the pin number to 9. If it is higher than 9, it subtracts
+					10 from the pin number, and adds 4 to the GPIO Controller address then runs the
+					check again.</p>
+				<p>
+					The effect of this is that r2 will now contain a number from 0 to 9 which represents
+					the remainder of dividing the pin number by 10. r0 will now contain the address
+					in the GPIO controller of this pin's function settings. This would be the same as
+					GPIO Controller Address + 4 &times; (GPIO Pin Number &divide; 10).</p>
+				<p>
+					Finally, copy the following code below the above.</p>
+				<div class="armCodeBlock"><p>
+					add r2, r2,lsl #1<br />
+					lsl r1,r2<br />
+					str r1,[r0]<br />
+					pop {pc}<br />
+				</div>
+				<div class="commandBox"><p>
+					Argument shift <span class="armCodeInline">reg,lsl #val</span> shifts the binary
+					representation of the number in <span class="armCodeInline">reg</span> left by <span
+						class="armCodeInline">val</span> before using it in the operation before.</div>
+				<div class="commandBox"><p>
+					<span class="armCodeInline">lsl reg,amt</span> shifts the binary representation
+					of the number in <span class="armCodeInline">reg</span> left by the number in <span
+						class="armCodeInline">amt</span>.</div>
+				<div class="commandBox"><p>
+					<span class="armCodeInline">str reg,[dst]</span> is the same as <span class="armCodeInline">
+						str reg,[dst,#0]</span>.</div>
+				<div class="commandBox"><p>
+					<span class="armCodeInline">pop {reg1,reg2,...}</span> copies the values from the
+					top of the stack into the register list <span class="armCodeInline">reg1,reg2,...</span>.
+					Only general purpose registers and pc can be popped.</div>
+				<p>
+					This code finishes off the method. The first line is actually a multiplication by
+					3 in disguise. Multiplication is a big and slow instruction in assembly code, as
+					the circuit can take a long time to come up with the answer. It is much faster sometimes
+					to use some instructions which can get the answer quicker. In this case, I know
+					that r2 &times; 3 is the same as r2 &times; 2 + r2. It is very easy to multiply a
+					register by 2 as this is conveniently the same as shifting the binary representation
+					of the number left by one place.</p>
+				<p>
+					One of the very useful features of the ARMv6 assembly code language is the ability
+					to shift an argument before using it. In this case, I add <span class="armCodeInline">
+						r2</span> to the result of shifting the binary representation of <span class="armCodeInline">
+							r2</span> to the left by one place. In assembly code, you often use tricks
+					such as this to compute answers more easily, but if you're uncomfortable with this,
+					you could also write something like <span class="armCodeInline">mov r3,r2</span>;
+					<span class="armCodeInline">add r2,r3</span>; <span class="armCodeInline">add r2,r3</span>.
+				</p>
+				<p>
+					Now we shift the function value left by a number of places equal to r2. Most instructions
+					such as <span class="armCodeInline">add</span> and <span class="armCodeInline">sub</span>
+					have a variant which uses a register rather than a number for the amount. We perform
+					this shift because we want to set the bits that correspond to our pin number, and
+					there are three bits per pin.
+				</p>
+				<p>
+					We then store the the computed function value at the address in the GPIO controller.
+					We already worked out the address in the loop, so we don't need to store it at an
+					offset like we did in OK01 and OK02.</p>
+				<p>
+					Finally, we can return from this method call. Since we pushed <span class="armCodeInline">
+						lr</span> onto the stack, if we pop <span class="armCodeInline">pc</span>, it
+					will copy the value that was in <span class="armCodeInline">lr</span> at the time
+					we pushed it into <span class="armCodeInline">pc</span>. This would be the same
+					as having used <span class="armCodeInline">mov pc,lr</span> and so the function
+					call will return when this line is run.</p>
+				<p>
+					The very keen may notice that this function doesn't actually work correctly. Although
+					it sets the function of the GPIO pin to the requested value, it causes all the pins
+					in the same block of 10's functions to go back to 0! This would likely be quite
+					annoying in a system which made heavy use of the GPIO pins. I leave it as a challenge
+					to the interested to fix this function so that it does not overwrite other pins
+					values by ensuring that all bits other than the 3 that must be set remain the same.
+					A solution to this can be found on the downloads page for this lesson. Functions
+					that you may find useful are <span class="armCodeInline">and</span> which computes
+					the Boolean and function of two registers, <span class="armCodeInline">not</span>
+					which computes the Boolean not and <span class="armCodeInline">orr</span> which
+					computes the Boolean or.
+				</p>
+				<h2 id="anotherfunction">
+					4 Another Function</h2>
+				<p>
+					So, we now have a function which takes care of the GPIO pin function setting. We
+					now need to make a function to turn a GPIO pin on or off. Rather than having one
+					function for off and one function for on, it would be handy to have a single function
+					which does either.</p>
+				<p>
+					We will make a function called SetGpio which takes a GPIO pin number as its first
+					input in r0, and a value as its second in r1. If the value is 0 we will turn the
+					pin off, and if it is not zero we will turn it on.</p>
+				<p>
+					Copy and paste the following code at the end of 'gpio.s'.</p>
+				<div class="armCodeBlock"><p>
+					.globl SetGpio<br />
+					SetGpio:<br />
+					pinNum .req r0<br />
+					pinVal .req r1<br />
+				</div>
+				<div class="commandBox"><p>
+					<span class="armCodeInline">alias .req reg</span> sets <span class="armCodeInline">alias</span>
+					to mean the register <span class="armCodeInline">reg</span>.</div>
+				<p>
+					Once again we need the <span class="armCodeInline">.globl</span> command and the
+					label to make the function accessible from other files. This time we're going to
+					use register aliases. Register aliases allow us to use a name other than just r0
+					or r1 for registers. This may not be so important now, but it will prove invaluable
+					when writing big methods later, and you should try to use aliases from now on. <span
+						class="armCodeInline">pinNum .req r0</span> means that <span class="armCodeInline">pinNum</span>
+					now means <span class="armCodeInline">r0</span> when used in instructions.
+				</p>
+				<p>
+					Copy and paste the following code after the above.</p>
+				<div class="armCodeBlock"><p>
+					cmp pinNum,#53<br />
+					movhi pc,lr<br />
+					push {lr}<br />
+					mov r2,pinNum<br />
+					.unreq pinNum<br />
+					pinNum .req r2<br />
+					bl GetGpioAddress<br />
+					gpioAddr .req r0<br />
+				</div>
+				<div class="commandBox"><p>
+					<span class="armCodeInline">.unreq alias</span> removes the alias <span class="armCodeInline">
+						alias</span>.</div>
+				<p>
+					Like in SetGpioFunction the first thing we must do is check that we were actually
+					given a valid pin number. We do this in exactly the same way by comparing <span class="armCodeInline">
+						pinNum</span> (<span class="armCodeInline">r0</span>) with 53, and returning
+					immediately if it is higher. Once again we wish to call GetGpioAddress, so we have
+					to preserve <span class="armCodeInline">lr</span> by pushing it onto the stack,
+					and to move <span class="armCodeInline">pinNum</span> to <span class="armCodeInline">
+						r2</span>. We then use the <span class="armCodeInline">.unreq</span> statement
+					to remove our alias from <span class="armCodeInline">r0</span>. Since the pin number
+					is now stored in <span class="armCodeInline">r2</span> we want our alias to reflect
+					this, so we remove the alias from <span class="armCodeInline">r0</span> and remake
+					it on <span class="armCodeInline">r2</span>. You should always <span class="armCodeInline">
+						.unreq</span> every alias as soon as it is done with, so that you cannot make
+					the mistake of using it further down the code when it no longer exists.</p>
+				<p>
+					We then call GetGpioAddress, and we create an alias for <span class="armCodeInline">
+						r0</span> to reflect this.</p>
+				<p>
+					Copy and paste the following code after the above.</p>
+				<div class="armCodeBlock"><p>
+					pinBank .req r3<br />
+					lsr pinBank,pinNum,#5<br />
+					lsl pinBank,#2<br />
+					add gpioAddr,pinBank<br />
+					.unreq pinBank<br />
+				</div>
+				<div class="commandBox"><p>
+					<span class="armCodeInline">lsr dst,src,#val</span> shifts the binary representation
+					of the number in <span class="armCodeInline">src</span> right by <span class="armCodeInline">
+						val</span>, but stores the result in <span class="armCodeInline">dst</span>.</div>
+				<p>
+					The GPIO controller has two sets of 4 bytes each for turning pins on and off. The
+					first set in each case controls the first 32 pins, and the second set controls the
+					remaining 22. In order to determine which set it is in, we need to divide the pin
+					number by 32. Fortunately this is very easy, at is the same as shifting the binary
+					representation of the pin number right by 5 places. Hence, in this case I've named
+					<span class="armCodeInline">r3</span> as <span class="armCodeInline">pinBank</span>
+					and then computed <span class="armCodeInline">pinNum</span> &divide; 32. Since it
+					is a set of 4 bytes, we then need to multiply the result of this by 4. This is the
+					same as shifting the binary representation left by 2 places, which is the command
+					that follows. You may wonder if we could just shift it right by 3 places, as we
+					went right then left. This won't work however, as some of the answer may have been
+					rounded away when we did &divide; 32 which may not be if we just &divide; 8.</p>
+				<p>
+					The result of this is that <span class="armCodeInline">gpioAddr</span> now contains
+					either 20200000<sub>16</sub> if the pin number is 0-31, and 20200004<sub>16</sub>
+					if the pin number is 32-53. This means if we add 28<sub>10</sub> we get the address
+					for turning the pin on, and if we add 40<sub>10</sub> we get the address for turning
+					the pin off. Since we are done with <span class="armCodeInline">pinBank</span>,
+					I use <span class="armCodeInline">.unreq</span> immediately afterwards.</p>
+				<p>
+					Copy and paste the following code after the above.</p>
+				<div class="armCodeBlock"><p>
+					and pinNum,#31<br />
+					setBit .req r3<br />
+					mov setBit,#1<br />
+					lsl setBit,pinNum<br />
+					.unreq pinNum<br />
+				</div>
+				<div class="commandBox"><p>
+					<span class="armCodeInline">and reg,#val</span> computes the Boolean and function
+					of the number in <span class="armCodeInline">reg</span> with <span class="armCodeInline">
+						val</span>.</div>
+				<p>
+					This next part of the function is for generating a number with the correct bit set.
+					For the GPIO controller to turn a pin on or off, we give it a number with a bit
+					set in the place of the remainder of that pin's number divided by 32. For example,
+					to set pin 16, we need a number with the 16th bit a 1. To set pin 45 we would need
+					a number with the 13th bit 1 as 45 &divide; 32 = 1 remainder 13.</p>
+				<p>
+					The <span class="armCodeInline">and</span> command computes the remainder we need.
+					How it does this is that the result of an and operation is a number with 1s in all
+					binary digits which had 1s in both of the inputs, and 0s elsewhere. This is a fundamental
+					binary operation, and is very quick. We have given it inputs of <span class="armCodeInline">
+						pinNum</span> and 31<sub>10</sub> = 11111<sub>2</sub>. This means that the answer
+					can only have 1 bits in the last 5 places, and so is definitely between 0 and 31.
+					Specifically it only has 1s where there were 1s in <span class="armCodeInline">pinNum</span>'s
+					last 5 places. This is the same as the remainder of a division by 32. It is no coincidence
+					that 31 = 32 - 1.</p>
+				<img src="images/binary3.png" alt="binary division example" />
+				<p>
+					The rest of this code simply uses this value to shift the number 1 left. This has
+					the effect of creating the binary number we need.</p>
+				<p>
+					Copy and paste the following code after the above.</p>
+				<div class="armCodeBlock"><p>
+					teq pinVal,#0<br />
+					.unreq pinVal<br />
+					streq setBit,[gpioAddr,#40]<br />
+					strne setBit,[gpioAddr,#28]<br />
+					.unreq setBit<br />
+					.unreq gpioAddr<br />
+					pop {pc}<br />
+				</div>
+				<div class="commandBox"><p>
+					<span class="armCodeInline">teq reg,#val</span> checks if the number in <span class="armCodeInline">
+						reg</span> is equal to <span class="armCodeInline">val</span>.</div>
+				<p>
+					This code ends the method. As stated before, we turn the pin off if pinVal is zero,
+					and on otherwise. <span class="armCodeInline">teq</span> (test equal) is another
+					comparison operation that can only be used to test for equality. It is similar to
+					cmp but it does not work out which number is bigger. If all you wish to do is test
+					if to numbers are the same, you can use <span class="armCodeInline">teq</span>.
+				</p>
+				<p>
+					If <span class="armCodeInline">pinVal</span> is zero, we store the <span class="armCodeInline">
+						setBit</span> at 40 away from the GPIO address, which we already know turns
+					the pin off. Otherwise we store it at 28, which turns the pin on. Finally, we return
+					by popping the <span class="armCodeInline">pc</span>, which sets it to the value
+					that we stored when we pushed the link register.</p>
+				<h2 id="newbeginning">
+					5 A New Beginning</h2>
+				<p>
+					Finally, after all that work we have our GPIO functions. We now need to alter 'main.s'
+					to use them. Since 'main.s' is now getting a lot bigger and more complicated, it is
+					better design to split it into two sections. The '.init' we've been using so far is
+					best kept as small as possible. We can change the code to reflect this easily.</p>
+				<p>
+					Insert the following just after <span class="armCodeInline">_start:</span> in main.s:</p>
+				<div class="armCodeBlock"><p>
+					b main<br />
+					<br />
+					.section .text<br />
+					main:<br />
+					mov sp,#0x8000<br />
+				</div>
+				<p>
+					The key change we have made here is to introduce the <span class="armCodeInline">.text</span>
+					section. I have designed the makefile and linker scripts such that code in the .text
+					section (which is the default section) is placed after the .init section which is placed at address 8000<sub>16</sub>.
+					This is the default load address and gives us some
+					space to store the stack. As the stack exists in memory, it has to have an address.
+					The stack grows down memory, so that each new value is at a lower address, thus
+					making the 'top' of the stack, the lowest address.
+				</p>
+				<div class="informationBox"><p>
+					The 'ATAGs' section in the diagram is a place where information about the Raspberry
+					Pi is stored such as how much memory it has, and what its default screen resolution
+					is.</div>
+				<img src="images/osLayout.png" alt="Layout diagram of operating system" />
+				<p>
+					Replace all the code that set the function of the GPIO pin with the following:</p>
+				<div class="armCodeBlock"><p>
+					pinNum .req r0<br />
+					pinFunc .req r1<br />
+					mov pinNum,#16<br />
+					mov pinFunc,#1<br />
+					bl SetGpioFunction<br />
+					.unreq pinNum<br />
+					.unreq pinFunc<br />
+				</div>
+				<p>
+					This code calls SetGpioFunction with the pin number 16 and the pin function code
+					1. This has the effect of enabling output to the OK LED.</p>
+				<p>
+					Replace any code which turns the OK LED on with the following:</p>
+				<div class="armCodeBlock"><p>
+					pinNum .req r0<br />
+					pinVal .req r1<br />
+					mov pinNum,#16<br />
+					mov pinVal,#0<br />
+					bl SetGpio<br />
+					.unreq pinNum<br />
+					.unreq pinVal<br />
+				</div>
+				<p>
+					This code uses SetGpio to turn off GPIO pin 16, thus turning on the OK LED. If we
+					instead used <span class="armCodeInline">mov pinVal,#1</span>, it would turn the
+					LED off. Replace your old code to turn the LED off with that.</p>
+				<h2 id="onwards">
+					6 Onwards</h2>
+				<p>
+					Hopefully now, you should be able to test what you have made on the Raspberry Pi.
+					We've done a large amount of code this time, so there is a lot that can go wrong.
+					If it does, head to the troubleshooting page.</p>
+				<p>
+					When you get it working, congratulations. Although our operating system does nothing
+					more than it did in <a href="ok02.html">Lesson 2: OK02</a>, we've learned a lot about
+					functions and formatting, and we can now code new features much more quickly. It
+					would be very simple now to make an Operating System that alters any GPIO register,
+					which could be used to control hardware!</p>
+				<p>
+					In <a href="ok04.html">Lesson 4: OK04</a>, we will address our wait function, which
+					is currently imprecise, so that we can gain better control over our LED, and ultimately
+					over all of the GPIO pins.</p>
+			</div>
+			<div id="pageFooter">
+				<hr />
+				<p><a rel="license" href="http://creativecommons.org/licenses/by-sa/3.0/deed.en_GB"><img alt="Creative Commons Licence" style="border-width:0" src="http://i.creativecommons.org/l/by-sa/3.0/88x31.png" /></a><br /><span xmlns:dct="http://purl.org/dc/terms/" property="dct:title">Baking Pi: Operating Systems Development</span> by <span xmlns:cc="http://creativecommons.org/ns#" property="cc:attributionName">Alex Chadwick</span> is licensed under a <a rel="license" href="http://creativecommons.org/licenses/by-sa/3.0/deed.en_GB">Creative Commons Attribution-ShareAlike 3.0 Unported License</a>.</p>
+			</div>
+		</div>
+	</div>
+</body>
+</html>

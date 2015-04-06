@@ -1,0 +1,256 @@
+﻿<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml">
+<head>
+	<title>Troubleshooting</title>
+	<link href="stylesheet.css" rel="Stylesheet" type="text/css" />
+	<script language="javascript" type="text/javascript" src="script.js"></script>
+</head>
+<body>
+	<div id="contentAll">
+		<div id="courseHead">
+			<h1>
+				Troubleshooting</h1>
+		</div>
+		<div id="pageAll">
+			<div id="pageBody">
+				<p style="color: red; font-weight: bold;">
+					This course has not yet been updated to work with the Raspberry Pi models B+
+					and A+. Some elements may not work, in particular the first few lessons about the
+					LED.
+				</p>
+				<p>
+					There is little more satisfying than when an Operating System you've written works
+					perfectly, however this is, unfortunately, rarely the case. I lost count long ago
+					how many Operating Systems I've written that didn't work in making this course. This page contains advice
+					for what to do when things just aren't working. It is broken down into compile errors
+					that happen before you can even make the Operating System, load errors that prevent
+					your Operating System doing anything, and runtime errors, where your Operating System
+					doesn't do the correct thing. I've also added specific help on each of the tutorial
+					Operating Systems, such as things that can commonly go wrong. If you have a problem
+					that isn't explained here, and think others my be able to benefit from your experience,
+					send an email to me at <a href="mailto:awc32@cam.ca.uk">awc32@cam.ac.uk</a>, and
+					I will add it here.
+					It is also well worth taking a look at the <a href="http://www.raspberrypi.org/phpBB3/viewforum.php?f=72">Raspberry Pi forums</a> to see if anyone else has run into the same problem.</p>
+				<div class="ucampas-toc">
+				</div>
+				<h2 id="compile">
+					1 Compiler Errors</h2>
+				<p>
+					Compiler errors are errors that occur when the <span class="shellCodeInline">make</span>
+					command runs on your Operating System. I've also included some common warnings too.</p>
+				<h3 id="badinstruction">
+					1.1 Error: bad instruction</h3>
+				<pre class="sh"><var>source/file.s</var>:<var>8</var>: Error: bad instruction `<var>sdd r0,r1</var>'</pre>
+				<p>
+					This error occurs when you use a command that doesn't exist. First of all, check
+					that you haven't mistyped the command. If you're using condition codes as well as
+					other options such as an <span class="armCodeInline">str</span> command with a <span
+						class="armCodeInline">b</span> suffix to only store a byte, and a <span class="armCodeInline">
+							eq</span> suffix to only store if the last condition was equal, the correct
+					order is in fact <span class="armCodeInline">streqb</span> not <span class="armCodeInline">
+						strbeq</span>.</p>
+				<h3 id="immediate">
+					1.2 Error: immediate expression requires a # prefix</h3>
+				<pre class="sh"><var>source/file.s</var>:<var>32</var>: Error: immediate expression requires a # prefix -- `<var>add r0,1</var>'</pre>
+				<p>
+					This means that you're trying to use a constant number, such as adding the number
+					one, but forgot to put a # (e.g. <span class="armCodeInline">add r3,4</span> should
+					be <span class="armCodeInline">add r3,#4</span>. You must do so wherever you use
+					a constant on a command that normally uses registers. This is true even for calculated
+					constants such as <span class="armCodeInline">#3*4</span>.</p>
+				<h3 id="registerexpected">
+					1.3 Error: ARM register expected</h3>
+				<pre class="sh"><var>source/file.s</var>:<var>24</var>: Error: ARM register expected -- `<var>add 0,r1</var>'</pre>
+				<p>
+					This means that you typed something that was not a register, when a register was
+					expected. Double check your spelling, especially if you're using <span class="armCodeInline">
+						.req</span>. If you are, make sure you haven't used <span class="armCodeInline">.unreq</span>
+					between the <span class="armCodeInline">.req</span> and this command.</p>
+				<h3 id="pseudoop">
+					1.4 Error: unknown pseudo-op</h3>
+				<pre class="sh"><var>source/file.s</var>: Error: unknown pseudo-op: `<var>.suction</var>'</pre>
+				<p>
+					This error occurs when you use a pseudo operation that doesn't exit. Check your spelling.
+				</p>
+				<h3 id="invalidconstant">
+					1.5 Error: invalid constant (number) after fixup</h3>
+				<pre class="sh"><var>source/file.s</var>:<var>24</var>: Error: invalid constant (<var>c21</var>) after fixup</pre>
+				<p>
+					This error occurs when you use a constant which does not meet the requirements of the
+					function. The most common example of this is the <span class="armCodeInline">mov</span>
+					instruction, which only allows numbers which can be represented as an 8 bit number, shifted
+					left by an even number. For example c21<sub>16</sub> = 110000100001<sub>2</sub> and so cannot
+					be represented in a <span class="armCodeInline">mov</span>, but c20<sub>16</sub> =
+					110000100000<sub>2</sub> = 11000010<sub>2</sub> &lt;&lt; 4, and so is valid in a <span class="armCodeInline">mov</span>.
+					Much the same rules apply to most constants in functions. Remember, to load in any constant,
+					use <span class="armCodeInline">ldr r0,=value</span>.
+				</p>
+				<h3 id="newline">
+					1.6 warning : end of file not at end of a line; newline inserted</h3>
+				<pre class="sh"><var>source/file.s</var>: warning : end of file not at end of a line; newline inserted</pre>
+				<p>
+					This means the last line in your file is not empty. You can ignore this, but to
+					fix it just add a new line at the end.
+				</p>
+				<h3 id="undefinedref">
+					1.7 undefined reference</h3>
+				<pre class="sh"><var>.text(+0x18)</var>: undefined reference to `<var>label</var>'</pre>
+				<p>
+					This means you've used a label which the linker can't find. This is probably due
+					to a misspelling. Remember that labels are case sensitive and that labels in different
+					files require <span class="armCodeInline">.globl</span> commands before they're
+					accessible in other files.</p>
+				<h3 id="sections">
+					1.8 `section' referenced in section `section' of build/file.o: defined in discarded section `section' of build/file.o</h3>
+				<pre class="sh">`<var>.trxt</var>' referenced in section `<var>.init</var>' of <var>build/main.o</var>: defined in discarded section `<var>.trxt</var>' of <var>build/main.o</var></pre>
+				<p>
+					This means that you've used a <span class="armCodeInline">.section</span> command,
+					but you've specified a section other than .init, .text or .data. Only these sections
+					are copied into the kernel.img file, any others are discarded, hence the error is saying
+					that some of your code was discarded. Check your spelling on <span class="armCodeInline">.section</span> commands.
+				</p>
+				<h3 id="nofiles">1.9 arm-none-eabi-ld: no input files</h3>
+				<pre class="sh"><var>arm-none-eabi-ld</var>: no input files</pre>
+				<p>This error means that the linker hasn't found your code. Double check you've got a source directory
+				with .s files within it like main.s. Make sure you haven't got something like main.s.txt.</p>
+				<h3 id="nomake">1.10 make: *** No targets specified and no makefile found.  Stop.</h3>
+				<pre class="sh">make: *** No targets specified and no makefile found.  Stop.</pre>
+				<p>
+					This error is caused by running make in the wrong directory. The command line must
+					have the same working directory as the file makefile which is in the template. Use
+					the 'cd' command to change directories, then run make again.</p>
+				<h3 id="win64">1.11 Windows Only: make: Interrupt/Exception caught (code = 0xc00000fd, addr = 0x425073)</h3>
+				<pre class="sh">make: Interrupt/Exception caught (code = <var>0xc00000fd</var>, addr = <var>0x425073</var>)</pre>
+				<p>
+					This is an error that can occur on Windows when YARGTO has been installed in a directory
+					with a space in it's name, for example: C:\Program Files (x86)\YAGARTO\. To fix,
+					please reinstall YAGARTO in a directory with no spaces such as C:\YAGARTO\.</p>
+				<h3 id="linux64">1.12 Linux 64 bit Only: arm-none-eabi-as: No such file or directory</h3>
+				<pre class="sh">bash: <var>arm-none-eabi-as</var>: No such file or directory</pre>
+				<p>This error is caused by running the Linux version of the toolchain on a 64
+				bit machine without 32 bit compatibility libraries. These can be retrieved easily
+				using:</p>
+				<pre class="sh"><kbd>sudo apt-get install ia32-libs</kbd></pre>
+				<h2 id="load">
+					2 Load Errors</h2>
+				<p>
+					Load errors are errors that occur that prevent your Operating System from giving
+					any output. This can be the hardest to diagnose and fix. Unfortunately, by their
+					nature, they give off no indication of what is wrong.</p>
+				<p>
+					The first thing you should check is that the tutorial answer does work. This confirms
+					that you're installing things correctly, that your Raspberry Pi is not physically
+					damaged and that your SD card works. If the answer doesn't work, make sure Linux
+					still does. If it doesn't you may have a problem with your SD card or Raspberry
+					Pi physically. Reimage the SD card or get a new one. If Linux does work but the
+					tutorial does not, you may not be installing the Operating System correctly. Double
+					check you're replacing kernel.img in the FAT partition of the SD card.</p>
+				<p>
+					If the answer does work but your attempt does not, then we know it is something
+					in your code. On the later tutorials, try altering the start of your code to turn
+					on the OK LED, just so you know if it boots at all. If not, double check that you
+					have some code in the .init section which branches into your .text section. Try
+					enabling the OK LED from the .init section.</p>
+				<p>
+					Ultimately what we need is some output. If you can get the LED to turn on from your
+					early code, then this is just a runtime error. If placing that code in the .init
+					section still doesn't enable output, it may be worth going back to the template and
+					copying in your code bit by bit until it stops working. Sometimes you never do find
+					the error; In the past I've ended up copying the entire code back into the template
+					and suddenly it worked.</p>
+				<h2 id="runtime">
+					3 Runtime Errors</h2>
+				<p>
+					Behind load errors, runtime errors are the hardest to diagnose and fix. These occur
+					when your Operating System just doesn't do what you want.</p>
+				<p>
+					The most important thing is to get information out of the system. The OK LED is very
+					useful for this. If the Operating System seems to stop, or get stuck, try turning on the LED
+					just before and just after various commands. If it turns on when just before an instruction, but
+					won't on the instruction afterwards, then we know this is the problem. Please remember that turning
+					on the LED will generally alter r0 to r3, so use <span class="armCodeInline">push {r0,r1,r2,r3}</span>
+					and <span class="armCodeInline">pop {r0,r1,r2,r3}</span> to preserve these registers. If you're in looping code,
+					try flashing the LED in the loop to see how many loops actually happen.</p>
+				<p>
+					If you're in the later tutorials make sure to use the screen for information. Write out text
+					about the current status, values, etc, in order to learn what is going on. Once
+					you've got some idea, have a look at the following common problems to see
+					if you can spot what has happened.</p>
+				<p>
+					Remember, think outside the box. Perhaps a function you wrote ages ago had a bug
+					you never noticed.</p>
+				<h3 id="wordalign">
+					3.1 Alignment</h3>
+				<p>
+					One of the most subtle runtime errors is the ARM alignment constraint. Any <span
+						class="armCodeInline">str</span> or <span class="armCodeInline">ldr</span> instruction
+					will not function correctly unless the computed address is a multiple of the size
+					of the data being read. For example, if you're using <span class="armCodeInline">ldr
+						r0,[r1,#2]</span>, then the value of <span class="armCodeInline">r1,#2</span>
+					must be a multiple of 4. If not unpredictable results occur. You should always be
+					able to guarantee this is this case. If you're referring to a label, make sure you
+					have a <span class="armCodeInline">.align 2</span> command BEFORE the label. This
+					will ensure that the label's address is a multiple of 2<sup>2</sup> = 4. You can
+					use <span class="armCodeInline">.align 3</span> to align to a multiple of 2<sup>3</sup>
+					= 8, etc.</p>
+				<h3 id="hang">
+					3.2 Hanging</h3>
+				<p>
+					A processor 'hangs' (stops) if it encounters a bad instruction or a bad address.
+					If your code gets stuck on a branch, load or store command, this is likely to be
+					the problem. You can use a condition around turning on the OK LED to check this.</p>
+				<h3 id="infinity">
+					3.3 Infinite Loops</h3>
+				<p>
+					Similarly to hanging, a processor can easily get stuck in loops. If the
+					processor reaches one of your loops, but never leaves, this could well be the
+					problem. Double check the conditions for leaving the loop will be satisfied.</p>
+				<h2 id="advice">
+					4 General Advice</h2>
+				<p>To help you, every time you compile a kernel, two extra files are compiled. kernel.list
+					contains a direct listing of all the assembly code, and kernel.map contains a map
+					of all your labels. You can use these files to mentally simulate the processor and
+					check it will do the correct thing. The processor starts at address 0 with all registers
+					in an undefined state. Try mentally checking that the processor will do what you
+					want. For things like alignment issues, you can double check everything is as it
+					should be with kernel.map.</p>
+				<h2 id="tutorials">
+					5 Tutorial Specific Advice</h2>
+				<h3 id="ok05stuck">
+					5.1 OK05 Doesn't Flash; Light Stays On</h3>
+				<p>
+					If you followed a previous version of this tutorial, a common problem on OK05 is
+					to have the OK LED stay on continuously rather than flashing a pattern. This is caused
+					by a change in the way the modern bootloaders load the kernel; they load it at address 0x8000 not 0.
+					Either replace makefile and kernel.ld with the ones currently in the template. Or alternatively
+					add the line <span class="shellCodeInline">kernel_old=1</span> to the file config.txt on the SD card, or create the file with this line in it.</p>
+				<h3 id="screen01blank">
+					5.2 Screen01 Displays Nothing</h3>
+				<p>
+					If you followed a previous version of this tutorial, this was a common problem.
+					The code in framebuffer.s has been altered to fix this problem. Specifically, it is
+					necessary to add 0x40000000 to the address of FrameBufferInfo before writing it to the mailbox.
+					</p>
+				<h3 id="screen02blank">
+					5.3 Screen02 Displays Nothing</h3>
+				<p>
+					See <a href="#ok05stuck">OK05 Doesn't Flash; Light Stays On</a>.</p>
+				<h3 id="input01blank">
+					5.4 Input01 Displays Nothing</h3>
+				<p>
+					First of all, check if this is an issue with the screen or the keyboard by running
+					the solution to Input02. It prints a message to the screen before receiving keyboard
+					input. If nothing shows on Input02, then see the help for <a href="#screen01blank">Screen01</a>.
+					If it does display, but you still can't type, then your keyboard may be incompatible with my USB driver.
+					Unfortunately, due to it's basic code, the driver doesn't support every keyboard.
+					Try to find other USB keyboards to use. I've personally tested 11 brands of keyboard,
+					of which 6 worked.</p>
+			</div>
+		</div>
+		<div id="pageFooter">
+				<hr />
+				<p><a rel="license" href="http://creativecommons.org/licenses/by-sa/3.0/deed.en_GB"><img alt="Creative Commons Licence" style="border-width:0" src="http://i.creativecommons.org/l/by-sa/3.0/88x31.png" /></a><br /><span xmlns:dct="http://purl.org/dc/terms/" property="dct:title">Baking Pi: Operating Systems Development</span> by <span xmlns:cc="http://creativecommons.org/ns#" property="cc:attributionName">Alex Chadwick</span> is licensed under a <a rel="license" href="http://creativecommons.org/licenses/by-sa/3.0/deed.en_GB">Creative Commons Attribution-ShareAlike 3.0 Unported License</a>.</p>
+		</div>
+	</div>
+</body>
+</html>

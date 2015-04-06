@@ -1,0 +1,221 @@
+﻿<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml">
+<head>
+	<title>Downloads</title>
+	<link href="stylesheet.css" rel="Stylesheet" type="text/css" />
+	<script language="javascript" type="text/javascript" src="script.js"></script>
+</head>
+<body>
+	<div id="contentAll">
+		<div id="courseHead">
+			<h1>
+				Downloads</h1>
+		</div>
+		<div id="pageAll">
+			<div id="pageBody">
+				<p>
+					This page contains download links for the GNU toolchains, as well as the model answers
+					to each lesson.</p>
+				<div class="ucampas-toc">
+				</div>
+				<h2 id="gnu">
+					1 GNU Toolchain</h2>
+				<h3 id="gnuwindows">
+					1.1 Microsoft Windows</h3>
+				<p>
+					For Microsoft Windows, I use the <a href="http://www.yagarto.de" title="Yet Another GNU ARM Toolchain">
+						YAGARTO</a> and <a href="http://www.mingw.org/" title="Minimalist GNU for Windows">MinGW</a> packages.</p>
+				<p>
+					Please visit the <a href="http://sourceforge.net/projects/yagarto" title="Yet Another GNU ARM Toolchain - Windows Downloads">
+						YAGARTO website</a> and download and install YAGARTO Tools and YAGARTO GNU ARM
+					toolchain for Windows. MinGW can be downloaded from <a href="http://sourceforge.net/projects/mingw/files/MSYS/Base/msys-core/msys-1.0.10/MSYS-1.0.10.exe/download" title="Download MinGW - Minimalist GNU for Windows">here</a>. You may need to restart your computer for this to work (honestly).</p>
+				<p>Note: YAGARTO must be installed to a path with no spaces, e.g. 'C:\YAGARTO\' not 'C:\Program Files\YAGARTO\'.</p>
+				<h3 id="gnumac">
+					1.2 Mac OS X</h3>
+				<p>
+					For Mac OS X, I use the <a href="http://www.yagarto.de" title="Yet Another GNU ARM Toolchain">
+						YAGARTO</a> packages.</p>
+				<p>
+					Please visit the <a href="http://sourceforge.net/projects/yagarto" title="Yet Another GNU ARM Toolchain - Mac OS X Downloads">
+						YAGARTO website</a> and download and install YAGARTO GNU ARM toolchain for Mac
+					OS X.</p>
+				<h3 id="gnulinux">
+					1.3 Linux</h3>
+				<p>
+					Use the following commands:</p>
+<pre class="sh">$ <kbd>wget http://www.cl.cam.ac.uk/freshers/raspberrypi/tutorials/os/downloads/arm-none-eabi.tar.bz2</kbd>
+--2012-08-16 18:26:29--  http://www.cl.cam.ac.uk/freshers/raspberrypi/tutorials/os/downloads/arm-none-eabi.tar.bz2
+Resolving www.cl.cam.ac.uk (www.cl.cam.ac.uk)... 128.232.0.20, 2001:630:212:267::80:14
+Connecting to www.cl.cam.ac.uk (www.cl.cam.ac.uk)|128.232.0.20|:80... connected.
+HTTP request sent, awaiting response... 200 OK
+Length: 32108070 (31M) [application/x-bzip2]
+Saving to: `arm-none-eabi.tar.bz2'
+
+100%[======================================>] 32,108,070   668K/s   in 67s
+
+2012-08-16 18:27:39 (467 KB/s) - `arm-none-eabi.tar.bz2' saved [32108070/32108070]
+
+$ <kbd>tar xjvf arm-none-eabi.tar.bz2</kbd>
+arm-2008q3/arm-none-eabi/
+arm-2008q3/arm-none-eabi/lib/
+arm-2008q3/arm-none-eabi/lib/libsupc++.a
+arm-2008q3/arm-none-eabi/lib/libcs3arm.a
+...
+arm-2008q3/share/doc/arm-arm-none-eabi/info/gprof.info
+arm-2008q3/share/doc/arm-arm-none-eabi/info/cppinternals.info
+arm-2008q3/share/doc/arm-arm-none-eabi/LICENSE.txt
+
+$ <kbd>export PATH=$PATH:$HOME/arm-2008q3/bin</kbd>
+</pre>
+				<h2 id="template">
+					2 OS Template</h2>
+				<p>
+					The OS Template file is one I have created which contains enough instructions for
+					the compiler to create a basic Operating System for the Raspberry Pi. It contains
+					no actual assembly code, just a <strong>Makefile script</strong> and a <strong>Linker
+						script</strong>.</p>
+				<p>
+					<a href="downloads/template.tar.gz" title="Template Operating System">Download Template.</a></p>
+				<p>
+					<a href="downloads/template_csud.tar.gz" title="Template USB Operating System">Download Template for USB Operating System.</a></p>
+				<h2 id="solutions">
+					3 Lesson Solutions</h2>
+				<h3 id="solution1">
+					3.1 Lesson 1: OK01</h3>
+				<p>
+					<a href="downloads/ok01.tar.gz">Full Solution</a></p>
+				<h3 id="solution2">
+					3.2 Lesson 2: OK02</h3>
+				<p>
+					<a href="downloads/ok02.tar.gz">Full Solution</a></p>
+				<h3 id="solution3">
+					3.3 Lesson 3: OK03</h3>
+				<p>
+					<a href="downloads/ok03.tar.gz">Full Solution</a>
+				</p>
+				<p>
+					<a href="downloads/ok03_extension.tar.gz">Extension Solution</a></p>
+				<h3 id="solution4">
+					3.4 Lesson 4: OK04</h3>
+				<p>
+					<a href="downloads/ok04.tar.gz">Full Solution</a></p>
+				<h3 id="solution5">
+					3.5 Lesson 5: OK05</h3>
+				<p>
+					<a href="downloads/ok05.tar.gz">Full Solution</a></p>
+				<h3 id="solution6">
+					3.6 Lesson 6: Screen01</h3>
+				<p>
+					<a href="downloads/screen01.tar.gz">Full Solution</a></p>
+				<h3 id="solution7">
+					3.7 Lesson 7: Screen02</h3>
+				<p>
+					<a href="downloads/screen02.tar.gz">Full Solution</a></p>
+				<h3 id="solution8">
+					3.8 Lesson 8: Screen03</h3>
+				<p>
+					<a href="downloads/screen03.tar.gz">Full Solution</a></p>
+				<h3 id="solution9">
+					3.9 Lesson 9: Screen04</h3>
+				<p>
+					<a href="downloads/screen04.tar.gz">Full Solution</a></p>
+				<h3 id="solution10">
+					3.10 Lesson 10: Input01</h3>
+				<p>
+					<a href="downloads/input_template.tar.gz">Lesson Template</a></p>
+				<p>
+					<a href="downloads/input01.tar.gz">Full Solution</a></p>
+				<h3 id="solution11">
+					3.11 Lesson 11: Input02</h3>
+				<p>
+					<a href="downloads/input02.tar.gz">Full Solution</a></p>
+				<h2 id="examples">4 Example Operating Systems</h2>
+				<p>Here are some example operating systems for you to learn from. If you've coded
+				an operating system that you think others could benefit from, please email me at
+				<a href="mailto:awc32@cam.ac.uk">awc32@cam.ac.uk</a>.</p>
+				<table>
+				<caption>Table 4.1 Example Operating Systems</caption>
+				<thead><tr><th>Name</th><th>Author</th><th>Description</th></tr></thead>
+				<tbody>
+					<tr><td><a href="downloads/example01.tar.gz">Coloured CLI</a></td><td><a href="mailto:awc32@cam.ac.uk">Alex Chadwick</a></td><td>This example is a small extension to Input01, featuring a coloured text terminal, rather than a black and white one. Special characters are used to change the colour.</td></tr>
+					<tr><td><a href="http://code.google.com/p/fprpbm">Pascal OSs</a></td><td><a href="mailto:marten@vanderhoning.net">Marten van der Honing</a></td><td>A few small OSs written is Pascal based on this course, and beyond.</td></tr>
+					<tr><td></td></tr>
+				</tbody>
+				</table>
+				<h2 id="fonts">
+					5 Fonts</h2>
+				<p>
+					Below are some fonts for you to use in your Operating Systems.</p>
+				<h3 id="fontsmm8x16">
+					5.1 Monospace, Monochrome 8x16</h3>
+				<p>
+					These fonts are the simplest ones available. They use a 1 to represent a white pixel,
+					a 0 to represent a black pixel, and having representations for the first 128 ASCII
+					characters. The use 16 bytes per character, arranged such that each byte is one
+					complete row, going <strong>right</strong> to <strong>left</strong> with higher bits, going top to bottom with later
+					bytes.</p>
+				<p><em>The tutorial used to suggest these fonts were stored in the opposite direction along the rows. The lowest bit is the rightmost pixel, the highest bit is the leftmost.</em></p>
+				<table class="tableTopCells">
+					<caption>
+						Table 5.1.1 Monospace, Monochrome 8x16 Fonts</caption>
+					<thead>
+						<tr>
+							<th>
+								Font
+							</th>
+							<th>
+								Image
+							</th>
+							<th>
+								License
+							</th>
+						</tr>
+					</thead>
+					<tbody>
+						<tr>
+							<td>
+								<a class="icon-media" href="downloads/font0.bin">Monospace Default</a>
+							</td>
+							<td>
+								<img alt="Default Monospace Preview" src="images/font0.png" />
+							</td>
+							<td>
+								<a href="downloads/font0license.txt">Free to use/redistribute commercially. Cannot be titled 'Bitstream' or 'Vera'.</a>
+							</td>
+						</tr>
+						<tr>
+							<td>
+								<a class="icon-media" href="downloads/font1.bin">Liberation Mono</a>
+							</td>
+							<td>
+								<img alt="Liberation Mono Preview" src="images/font1.png" />
+							</td>
+							<td>
+								<a href="downloads/font1license.txt">SIL Open Font License.</a>
+							</td>
+						</tr>
+						<tr>
+							<td>
+								<a class="icon-media" href="downloads/font2.bin">Liberation Serif Mono</a>
+							</td>
+							<td>
+								<img alt="Liberation Mono Preview" src="images/font2.png" />
+							</td>
+							<td>
+								<a href="downloads/font1license.txt">SIL Open Font License.</a>
+							</td>
+						</tr>
+					</tbody>
+				</table>
+				<h2 id="csud">6 USB driver (CSUD) Source</h2>
+				<p>The source code for CSUD (Chadderz's Simple USB driver) used in the tutorials is available
+				here: <a class="icon-external" href="https://github.com/Chadderz121/csud">https://github.com/Chadderz121/csud</a>.</p>
+			</div>
+		</div>
+		<div id="pageFooter">
+			<hr />
+			<p><a rel="license" href="http://creativecommons.org/licenses/by-sa/3.0/deed.en_GB"><img alt="Creative Commons Licence" style="border-width:0" src="http://i.creativecommons.org/l/by-sa/3.0/88x31.png" /></a><br /><span xmlns:dct="http://purl.org/dc/terms/" property="dct:title">Baking Pi: Operating Systems Development</span> by <span xmlns:cc="http://creativecommons.org/ns#" property="cc:attributionName">Alex Chadwick</span> is licensed under a <a rel="license" href="http://creativecommons.org/licenses/by-sa/3.0/deed.en_GB">Creative Commons Attribution-ShareAlike 3.0 Unported License</a>.</p>
+		</div>
+	</div>
+</body>
+</html>

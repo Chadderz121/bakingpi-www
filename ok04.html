@@ -1,0 +1,384 @@
+﻿<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml">
+<head>
+	<title>Lesson 4 OK04</title>
+	<link href="stylesheet.css" rel="Stylesheet" type="text/css" />
+	<script language="javascript" type="text/javascript" src="script.js"></script>
+</head>
+<body>
+	<div id="contentAll">
+		<div id="courseHead">
+			<h1>
+				Lesson 4 OK04</h1>
+		</div>
+		<div id="pageAll">
+			<div id="pageBody">
+				<p>
+					The OK04 lesson builds on OK03 by teaching how to use the timer to flash the 'OK' or 'ACT'
+					LED at precise intervals. It is assumed you have the code for the <a href="ok03.html">
+						Lesson 3: OK03</a> operating system as a basis.
+				</p>
+				<div class="ucampas-toc">
+				</div>
+				<h2 id="newdevice">
+					1 A New Device</h2>
+				<div class="informationBox">
+					<p>
+						The timer is the only way the Pi can keep time. Most computers have a battery powered
+						clock to keep time when off.</p>
+				</div>
+				<p>
+					So far, we've only looked at one piece of hardware on the Raspberry Pi, namely the
+					GPIO Controller. I've simply told you what to do, and it happened. Now we're going
+					to look at the timer, and I'm going to lead you through understanding how it works.</p>
+				<p>
+					Just like the GPIO Controller, the timer has an address. In this case, the timer
+					is based at 20003000<sub>16</sub>. Reading the manual, we find the following table:</p>
+				<table>
+					<caption>
+						Table 1.1 GPIO Controller Registers
+					</caption>
+					<thead>
+						<tr>
+							<th>
+								Address
+							</th>
+							<th>
+								Size / Bytes
+							</th>
+							<th>
+								Name
+							</th>
+							<th>
+								Description
+							</th>
+							<th>
+								Read or Write
+							</th>
+						</tr>
+					</thead>
+					<tbody>
+						<tr>
+							<td>
+								20003000
+							</td>
+							<td>
+								4
+							</td>
+							<td>
+								Control / Status
+							</td>
+							<td>
+								Register used to control and clear timer channel comparator matches.
+							</td>
+							<td>
+								RW
+							</td>
+						</tr>
+						<tr>
+							<td>
+								20003004
+							</td>
+							<td>
+								8
+							</td>
+							<td>
+								Counter
+							</td>
+							<td>
+								A counter that increments at 1MHz.
+							</td>
+							<td>
+								R
+							</td>
+						</tr>
+						<tr>
+							<td>
+								2000300C
+							</td>
+							<td>
+								4
+							</td>
+							<td>
+								Compare 0
+							</td>
+							<td>
+								0th Comparison register.
+							</td>
+							<td>
+								RW
+							</td>
+						</tr>
+						<tr>
+							<td>
+								20003010
+							</td>
+							<td>
+								4
+							</td>
+							<td>
+								Compare 1
+							</td>
+							<td>
+								1st Comparison register.
+							</td>
+							<td>
+								RW
+							</td>
+						</tr>
+						<tr>
+							<td>
+								20003014
+							</td>
+							<td>
+								4
+							</td>
+							<td>
+								Compare 2
+							</td>
+							<td>
+								2nd Comparison register.
+							</td>
+							<td>
+								RW
+							</td>
+						</tr>
+						<tr>
+							<td>
+								20003018
+							</td>
+							<td>
+								4
+							</td>
+							<td>
+								Compare 3
+							</td>
+							<td>
+								3rd Comparison register.
+							</td>
+							<td>
+								RW
+							</td>
+						</tr>
+					</tbody>
+				</table>
+				<img src="images/systemTimer.png" alt="Flowchart of the system timer's operation" />
+				<p>
+					This table tells us a lot, but the descriptions in the manual of the various fields
+					tell us the most. The manual explains that the timer fundamentally just increments
+					the value in Counter by 1 every 1 micro second. Each time it does so, it compares
+					the lowest 32 bits (4 bytes) of the counter's value with the 4 comparison registers,
+					and if it matches any of them, it updates Control / Status to reflect which ones
+					matched.</p>
+				<p>
+					For more information about bits, bytes, bit fields, and data sizes expand the box
+					below.</p>
+				<div class="expandableHeader" onclick="return ExpandToggle('bits')">
+					<p>
+						<a class="icon-more">Bits explained</a></p>
+				</div>
+				<div id="bits" class="expandable">
+					<p>
+						A bit is a name for a single binary digit. As you may recall, a single binary digit
+						is either a 1 or a 0.</p>
+					<p>
+						A byte is the name we give for a collection of 8 bits. Since each bit can be one
+						of two values, there are 2<sup>8</sup> = 256 different possible values for a byte.
+						We normally interpret a byte as a binary number between 0 and 255 inclusive.</p>
+					<img class="sideDiagram" src="images/gpioControllerFunctionSelect.png" alt="Diagram of GPIO function select controller register 0." />
+					<p>
+						A bit field is another way of interpreting binary. Rather than interpreting it as
+						a number, binary can be interpreted as many different things. A bit field treats
+						binary as a series of switches which are either on (1) or off (0). If we have a
+						meaning for each of these little switches, we can use them to control things. We
+						have actually already met bitfields with the GPIO controller, with the setting a
+						pin on or off. The bit that was a 1 was the GPIO pin to actually turn on or off.
+						Sometimes we need more options than just on or off, so we group several of the switches
+						together, such as with the GPIO controller function settings (pictured), in which
+						every group of 3 bits controls one GPIO pin function.</p>
+				</div>
+				<p>
+					Our goal is to implement a function that we can call with an amount of time as an
+					input that will wait for that amount of time and then return. Think for a moment
+					about how we could do this, given what we have.
+				</p>
+				<p>
+					I see there being two options:</p>
+				<ol>
+					<li>Read a value from the counter, and then keep branching back into the same code until
+						the counter is the amount of time to wait more than it was.</li>
+					<li>Read a value from the counter, add the amount of time to wait, store this in one
+						of the comparison registers and then keep branching back into the same code until
+						the Control / Status register updates.</li></ol>
+				<div class="informationBox">
+					<p>
+						Issues like these are called concurrency problems, and can be almost impossible
+						to fix.</p>
+				</div>
+				<p>
+					Both of these strategies would work fine, but in this tutorial we will only implement
+					the first. The reason is because the comparison registers are more likely to go
+					wrong, as during the time it takes to add the wait time and store it in the comparison
+					register, the counter may have increased, and so it would not match. This could
+					lead to very long unintentional delays if a 1 micro second wait is requested (or
+					worse, a 0 microsecond wait).</p>
+				<h2 id="implementation">
+					2 Implementation</h2>
+				<div class="informationBox">
+					<p>
+						Large Operating Systems normally use the Wait function as an opportunity to perform
+						background tasks.</p>
+				</div>
+				<p>
+					I will largely leave the challenge of creating the ideal wait method to you. I suggest
+					you put all code related to the timer in a file called 'systemTimer.s' (for hopefully
+					obvious reasons). The complicated part about this method, is that the counter is
+					an 8 byte value, but each register only holds 4 bytes. Thus, the counter value will
+					span two registers.</p>
+				<p>
+					The following code blocks are examples.</p>
+				<div class="armCodeBlock">
+					<p>
+						ldrd r0,r1,[r2,#4]
+				</div>
+				<div class="commandBox">
+					<p>
+						<span class="armCodeInline">ldrd regLow,regHigh,[src,#val]</span> loads 8 bytes
+						from the address given by the number in <span class="armCodeInline">src</span> plus
+						<span class="armCodeInline">val</span> into <span class="armCodeInline">regLow</span>
+						and <span class="armCodeInline">regHigh</span>
+					.</div>
+				<p>
+					An instruction you may find useful is the <span class="armCodeInline">ldrd</span>
+					instruction above. It loads 8 bytes of memory across 2 registers. In this case,
+					the 8 bytes of memory starting at the address in <span class="armCodeInline">r2</span>
+					would be copied into <span class="armCodeInline">r0</span> and <span class="armCodeInline">
+						r1</span>. What is slightly complicated about this arrangement is that <span class="armCodeInline">
+							r1</span> actually holds the highest 4 bytes. In other words, if the counter
+					had a value of 999,999,999,999<sub>10</sub> = 1110100011010100101001010000111111111111<sub>2</sub>,
+					<span class="armCodeInline">r1</span> would contain 11101000<sub>2</sub> and <span
+						class="armCodeInline">r0</span> would contain 11010100101001010000111111111111<sub>2</sub>.
+				</p>
+				<p>
+					The most sensible way to implement this would be to compute the difference between
+					the current counter value and the one from when the method started, and then to
+					compare this with the requested amount of time to wait. Conveniently, unless you
+					wish to support wait times that were 8 bytes, the value in <span class="armCodeInline">
+						r1</span> in the example above could be discarded, and only the low 4 bytes
+					of the counter need be used.</p>
+				<p>
+					When waiting you should always be sure to use higher comparisons not equality comparisons,
+					as if you try to wait for the gap between the time the method started and the time
+					it ends to be exactly the amount requested, you could miss the value, and wait forever.</p>
+				<p>
+					If you cannot figure out how to code the wait function, expand the box below for
+					a guide.</p>
+				<div class="expandableHeader" onclick="return ExpandToggle('waitfunc')">
+					<p>
+						<a class="icon-more">Wait function implementation</a></p>
+				</div>
+				<div id="waitfunc" class="expandable">
+					<p>
+						Borrowing the idea from the GPIO controller, the first function we should write
+						should be to get the address of this system timer. An example of this is shown below:</p>
+					<div class="armCodeBlock">
+						<p>
+							.globl GetSystemTimerBase<br />
+							GetSystemTimerBase:
+							<br />
+							ldr r0,=0x20003000<br />
+							mov pc,lr<br />
+					</div>
+					<p>
+						Another function that will prove useful would be one that returns the current counter
+						value in registers <span class="armCodeInline">r0</span> and <span class="armCodeInline">
+							r1</span>:</p>
+					<div class="armCodeBlock">
+						<p>
+							.globl GetTimeStamp<br />
+							GetTimeStamp:<br />
+							push {lr}<br />
+							bl GetSystemTimerBase<br />
+							ldrd r0,r1,[r0,#4]<br />
+							pop {pc}<br />
+					</div>
+					<p>
+						This function simply uses the GetSystemTimerBase function and loads in the counter
+						value using <span class="armCodeInline">ldrd</span> like we have just learned.</p>
+					<p>
+						Now we actually want to code our wait method. First of all, we need to know the
+						counter value when the method started, which we can now get using GetTimeStamp.</p>
+					<div class="armCodeBlock">
+						<p>
+							delay .req r2<br />
+							mov delay,r0<br />
+							push {lr}<br />
+							bl GetTimeStamp<br />
+							start .req r3<br />
+							mov start,r0<br />
+					</div>
+					<p>
+						This code copies our method's input, the amount of time to delay, into <span class="armCodeInline">
+							r2</span>, and then calls GetTimeStamp, which we know will return the current
+						counter value in <span class="armCodeInline">r0</span> and <span class="armCodeInline">
+							r1</span>. It then copies the lower 4 bytes of the counter's value to <span class="armCodeInline">
+								r3</span>.
+					</p>
+					<p>
+						Next we need to compute the difference between the current counter value and the
+						reading we just took, and then keep doing so until the gap between them is at least
+						the size of <span class="armCodeInline">delay</span>.</p>
+					<div class="armCodeBlock">
+						<p>
+							loop$:<br />
+							<div class="indent">
+								<p>
+									bl GetTimeStamp<br />
+									elapsed .req r1<br />
+									sub elapsed,r0,start<br />
+									cmp elapsed,delay<br />
+									.unreq elapsed<br />
+									bls loop$<br />
+							</div>
+					</div>
+					<p>
+						This code will wait until the requested amount of time has passed. It takes a reading
+						from the counter, subtracts the initial value from this reading and then compares
+						that to the requested delay. If the amount of time that has elapsed is less than
+						the requested delay, it branches back to <span class="armCodeInline">loop$</span>.</p>
+					<div class="armCodeBlock">
+						<p>
+							.unreq delay<br />
+							.unreq start<br />
+							pop {pc}<br />
+					</div>
+					<p>
+						This code finishes off the function by returning.</p>
+				</div>
+				<h2 id="abl">
+					3 Another Blinking Light</h2>
+				<p>
+					Once you have what you believe to be a working wait function, change 'main.s' to
+					use it. Alter everywhere you wait to set the value of r0 to some big number (remember
+					it is in microseconds) and then test it on the Raspberry Pi. If it does not function
+					correctly please see our troubleshooting page.</p>
+				<p>
+					Once it is working, congratulations you have now mastered another device, and with
+					it, time itself. In the next and final lesson in the OK series, <a href="ok05.html">
+						Lesson 5: OK05</a> we shall use all we have learned to flash out a pattern on
+					the LED.</p>
+			</div>
+			<div id="pageFooter">
+				<hr />
+				<p>
+					<a rel="license" href="http://creativecommons.org/licenses/by-sa/3.0/deed.en_GB">
+						<img alt="Creative Commons Licence" style="border-width: 0" src="http://i.creativecommons.org/l/by-sa/3.0/88x31.png" /></a><br />
+					<span xmlns:dct="http://purl.org/dc/terms/" property="dct:title">Baking Pi: Operating
+						Systems Development</span> by <span xmlns:cc="http://creativecommons.org/ns#" property="cc:attributionName">
+							Alex Chadwick</span> is licensed under a <a rel="license" href="http://creativecommons.org/licenses/by-sa/3.0/deed.en_GB">
+								Creative Commons Attribution-ShareAlike 3.0 Unported License</a>.</p>
+			</div>
+		</div>
+	</div>
+</body>
+</html>

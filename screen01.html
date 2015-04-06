@@ -1,0 +1,881 @@
+﻿<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml">
+<head>
+	<title>Lesson 6 Screen01</title>
+	<link href="stylesheet.css" rel="Stylesheet" type="text/css" />
+	<script language="javascript" type="text/javascript" src="script.js"></script>
+</head>
+<body>
+	<div id="contentAll">
+		<div id="courseHead">
+			<h1>
+				Lesson 6 Screen01</h1>
+		</div>
+		<div id="pageAll">
+			<div id="pageBody">
+				<p>
+					Welcome to the Screen lesson series. In this series, you will learn how to control
+					the screen using the Raspberry Pi in assembly code, starting at just displaying
+					random data, then moving up to displaying a fixed image, displaying text and then
+					formatting numbers into text. It is assumed that you have already completed the
+					OK series, and so things covered in this series will not be repeated here.
+				</p>
+				<p>
+					This first screen lesson teaches some basic theory about graphics, and then applies
+					it to display a gradient pattern to the screen or TV.</p>
+				<div class="ucampas-toc">
+				</div>
+				<h2 id="gs">
+					1 Getting Started</h2>
+				<p>
+					It is expected that you have completed the OK series, and so functions in the 'gpio.s'
+					file and 'systemTimer.s' file from that series will be called. If you do not have
+					these files, or prefer to use a correct implementation, download the solution to
+					OK05.s. The 'main.s' file from here will also be useful, up to and including <span
+						class="armCodeInline">mov sp,#0x8000</span>. Please delete anything after that
+					line.</p>
+				<h2 id="cg">
+					2 Computer Graphics</h2>
+				<div class="informationBox"><p>There are a few systems for representing colours as numbers. Here we focus on RGB systems, but HSL is another common system used.</p></div>
+				<p>
+					As you're hopefully beginning to appreciate, at a fundamental level, computers are
+					very stupid. They have a limited number of instructions, almost exclusively to do
+					with maths, and yet somehow they are capable of doing many things. The thing we
+					currently wish to understand is how a computer could possibly put an image on the
+					screen. How would we translate this problem into binary? The answer is relatively
+					straightforward; we devise some system of numbering each colour, and then we store
+					one number for every pixel on the screen. A pixel is a small dot on your screen.
+					If you move very close, you will probably be able to make out individual pixels
+					on your screen, and be able to see that everything image is just made out of these
+					pixels in combination.</p>
+				<p>
+					As the computer age advanced, people wanted more and more complicated graphics,
+					and so the concept of a graphics card was invented. The graphics card is a secondary
+					processor on your computer which only exists to draw images to the screen. It has
+					the job of turning the pixel value information into light intensity levels to be
+					transmitted to the screen. On modern computers, graphics cards can also do a lot
+					more than that, such as drawing 3D graphics. In this tutorial however, we will just
+					concentrate on the first use of graphics cards; getting pixel colours from memory
+					out to the screen.</p>
+				<p>
+					One issue that is raised immediately by all this is the system we use for numbering
+					colours. There are several choices, each producing outputs of different quality.
+					I will outline a few here for completeness.</p>
+				<div class="informationBox"><p>Although some images here have few colours they use a
+				technique called spatial dithering. This allows them to still show a good representation
+				of the image, with very few colours. Many early Operating Systems used this technique.</p></div>
+				<table class="tableTopCells">
+					<caption>
+						Table 2.1 Some Colour Palettes</caption>
+					<thead>
+						<tr>
+							<th>
+								Name
+							</th>
+							<th>
+								Unique Colours
+							</th>
+							<th>
+								Description
+							</th>
+							<th>
+								Examples
+							</th>
+						</tr>
+					</thead>
+					<tbody>
+						<tr>
+							<td>
+								Monochrome
+							</td>
+							<td>
+								2
+							</td>
+							<td>
+								Use 1 bit to store each pixel, with a 1 being white, and a 0 being black.
+							</td>
+							<td>
+								<img src="images/colour1bImage.png" alt="Monochrome image of a bird" />
+							</td>
+						</tr>
+						<tr>
+							<td>
+								Greyscale
+							</td>
+							<td>
+								256
+							</td>
+							<td>
+								Use 1 byte to store each pixel, with 255 representing white, 0 representing black,
+								and all values in between representing a linear combination of the two.
+							</td>
+							<td>
+								<img src="images/colour8gImage.png" alt="Geryscale image of a bird" />
+							</td>
+						</tr>
+						<tr>
+							<td>
+								8 Colour
+							</td>
+							<td>
+								8
+							</td>
+							<td>
+								Use 3 bits to store each pixel, the first bit representing the presence of a red
+								channel, the second representing a green channel and the third a blue channel.
+							</td>
+							<td>
+								<img src="images/colour3bImage.png" alt="8 colour image of a bird" />
+							</td>
+						</tr>
+						<tr>
+							<td>
+								Low Colour
+							</td>
+							<td>
+								256
+							</td>
+							<td>
+								Use 8 bits to store each pixel, the first 3 bit representing the intensity of the
+								red channel, the next 3 bits representing the intensity of the green channel and
+								the final 2 bits representing the intensity of the blue channel.
+							</td>
+							<td>
+								<img src="images/colour8bImage.png" alt="Low colour image of a bird" />
+							</td>
+						</tr>
+						<tr>
+							<td>
+								High Colour
+							</td>
+							<td>
+								65,536
+							</td>
+							<td>
+								Use 16 bits to store each pixel, the first 5 bit representing the intensity of the
+								red channel, the next 6 bits representing the intensity of the green channel and
+								the final 5 bits representing the intensity of the blue channel.
+							</td>
+							<td>
+								<img src="images/colour16bImage.png" alt="High colour image of a bird" />
+							</td>
+						</tr>
+						<tr>
+							<td>
+								True Colour
+							</td>
+							<td>
+								16,777,216
+							</td>
+							<td>
+								Use 24 bits to store each pixel, the first 8 bits representing the intensity of
+								the red channel, the second 8 representing the green channel and the final 8 bits
+								the blue channel.
+							</td>
+							<td>
+								<img src="images/colour24bImage.png" alt="True colour image of a bird" />
+							</td>
+						</tr>
+						<tr>
+							<td>
+								RGBA32
+							</td>
+							<td>
+								16,777,216 with 256 transparency levels
+							</td>
+							<td colspan="2">
+								Use 32 bits to store each pixel, the first 8 bits representing the intensity of
+								the red channel, the second 8 representing the green channel, the third 8 bits the
+								blue channel, and the final 8 bits a transparency channel. The transparency channel
+								is only considered when drawing one image on top of another and is stored such that
+								a value of 0 indicates the image behind's colour, a value of 255 represents this
+								image's colour, and all values between represent a mix.
+							</td>
+							<td>
+							</td>
+						</tr>
+					</tbody>
+				</table>
+				<p>
+					In this tutorial we shall use High Colour initially. As you can see form the image,
+					it is produces clear, good quality images, but it doesn't take up as much space
+					as True Colour. That said, for quite a small display of 800x600 pixels, it would
+					still take just under 1 megabyte of space. It also has the advantage that the size
+					is a multiple of a power of 2, which greatly reduces the complexity of getting information
+					compared with True Colour.</p>
+					<div class="informationBox">
+						<p>
+							Storing the frame buffer places a heavy memory burden on a computer. For this reason,
+							early computers often cheated, by, for example, storing a screens worth of text,
+							and just drawing each letter to the screen every time it is refreshed separately.</p></div>
+				<p>
+					The Raspberry Pi has a very special and rather odd relationship with it's graphics
+					processor. On the Raspberry Pi, the graphics processor actually runs first, and
+					is responsible for starting up the main processor. This is very unusual. Ultimately
+					it doesn't make too much difference, but in many interactions, it often feels like
+					the processor is secondary, and the graphics processor is the most important. The
+					two communicate on the Raspberry Pi by what is called the 'mailbox'. Each can deposit
+					mail for the other, which will be collected at some future point and then dealt
+					with. We shall use the mailbox to ask the graphics processor for an address. The
+					address will be a location to which we can write the pixel colour information for
+					the screen, called a frame buffer, and the graphics card will regularly check this
+					location, and update the pixels on the screen appropriately.
+				</p>
+				<h2 id="postman">
+					3 Programming the Postman</h2>
+					<div class="informationBox">
+						<p>
+							Message passing is quite a common way for components to communicate. Some Operating
+							Systems use virtual message passing to allow programs to communicate.</p></div>
+				<p>
+					The first thing we are going to need to program is a 'postman'. This is just two
+					methods: MailboxRead, reading one message from the mailbox channel in r0. and MailboxWrite,
+					writing the value in the top 28 bits of r0 to the mailbox channel in r1. The Raspberry
+					Pi has 7 mailbox channels for communication with the graphics processor, only the
+					first of which is useful to us, as it is for negotiating the frame buffer.</p>
+				<p>
+					The following table and diagrams describe the operation of the mailbox.</p>
+				<table>
+					<caption>
+						Table 3.1 Mailbox Addresses</caption>
+					<thead>
+						<tr>
+							<th>
+								Address
+							</th>
+							<th>
+								Size / Bytes
+							</th>
+							<th>
+								Name
+							</th>
+							<th>
+								Description
+							</th>
+							<th>
+								Read / Write
+							</th>
+						</tr>
+					</thead>
+					<tbody>
+						<tr>
+							<td>
+								2000B880
+							</td>
+							<td>
+								4
+							</td>
+							<td>
+								Read
+							</td>
+							<td>
+								Receiving mail.
+							</td>
+							<td>
+								R
+							</td>
+						</tr>
+						<tr>
+							<td>
+								2000B890
+							</td>
+							<td>
+								4
+							</td>
+							<td>
+								Poll
+							</td>
+							<td>
+								Receive without retrieving.
+							</td>
+							<td>
+								R
+							</td>
+						</tr>
+						<tr>
+							<td>
+								2000B894
+							</td>
+							<td>
+								4
+							</td>
+							<td>
+								Sender
+							</td>
+							<td>
+								Sender information.
+							</td>
+							<td>
+								R
+							</td>
+						</tr>
+						<tr>
+							<td>
+								2000B898
+							</td>
+							<td>
+								4
+							</td>
+							<td>
+								Status
+							</td>
+							<td>
+								Information.
+							</td>
+							<td>
+								R
+							</td>
+						</tr>
+						<tr>
+							<td>
+								2000B89C
+							</td>
+							<td>
+								4
+							</td>
+							<td>
+								Configuration
+							</td>
+							<td>
+								Settings.
+							</td>
+							<td>
+								RW
+							</td>
+						</tr>
+						<tr>
+							<td>
+								2000B8A0
+							</td>
+							<td>
+								4
+							</td>
+							<td>
+								Write
+							</td>
+							<td>
+								Sending mail.
+							</td>
+							<td>
+								W
+							</td>
+						</tr>
+					</tbody>
+				</table>
+				<p>
+					In order to send a message to a particular mailbox:</p>
+				<ol>
+					<li>The sender waits until the Status field has a 0 in the top bit.</li>
+					<li>The sender writes to Write such that the lowest 4 bits are the mailbox to write
+						to, and the upper 28 bits are the message to write.</li>
+				</ol>
+				<p>
+					In order to read a message:</p>
+				<ol>
+					<li>The receiver waits until the Status field has a 0 in the 30th bit.</li>
+					<li>The receiver reads from Read.</li>
+					<li>The receiver confirms the message is for the correct mailbox, and tries again if
+						not.</li>
+				</ol>
+				<p>
+					If you're feeling particularly confident, you now have enough information to write
+					the two methods we need. If not, read on.</p>
+				<p>
+					As always the first method I recommend you implement is one to get the address of
+					the mailbox region.</p>
+				<div class="armCodeBlock"><p>
+					.globl GetMailboxBase<br />
+					GetMailboxBase:<br />
+					ldr r0,=0x2000B880<br />
+					mov pc,lr<br />
+				</p></div>
+				<p>
+					The sending procedure is least complicated, so we shall implement this first. As
+					your methods become more and more complicated, you will need to start planning them
+					in advance. A good way to do this might be to write out a simple list of the steps
+					that need to be done, in a fair amount of detail, like below.
+				</p>
+				<ol>
+					<li>Our input will be what to write (r0), and what mailbox to write it to (r1). We must
+						validate this is by checking it is a real mailbox, and that the low 4 bits of the
+						value are 0. Never forget to validate inputs.</li>
+					<li>Use GetMailboxBase to retrieve the address.</li>
+					<li>Read from the Status field.</li>
+					<li>Check the top bit is 0. If not, go back to 3.</li>
+					<li>Combine the value to write and the channel.</li>
+					<li>Write to the Write.</li>
+				</ol>
+				<p>
+					Let's handle each of these in order.</p>
+				<ol>
+					<li>
+						<div class="armCodeBlock"><p>
+							.globl MailboxWrite<br />
+							MailboxWrite:
+							<br />
+							tst r0,#0b1111<br />
+							movne pc,lr<br />
+							cmp r1,#15<br />
+							movhi pc,lr<br />
+						</div>
+						<div class="commandBox"><p>
+							<span class="armCodeInline">tst reg,#val</span> computes <span class="armCodeInline">
+								and reg,#val</span> and compares the result with 0.</div>
+						<p>
+							This achieves our validation on <span class="armCodeInline">r0</span> and <span class="armCodeInline">
+								r1</span>. <span class="armCodeInline">tst</span> is a function that compares
+							two numbers by computing the logical and operation of the numbers, and then comparing
+							the result with 0. In this case it checks that the lowest 4 bits of the input in
+							r0 are all 0.</p>
+					</li>
+					<li>
+						<div class="armCodeBlock"><p>
+							channel .req r1<br />
+							value .req r2<br />
+							mov value,r0<br />
+							push {lr}<br />
+							bl GetMailboxBase<br />
+							mailbox .req r0<br />
+						</div>
+						<p>
+							This code ensures we will not overwrite our value, or link register and calls GetMailboxBase.</p>
+					</li>
+					<li>
+						<div class="armCodeBlock"><p>
+							wait1$:<br />
+							status .req r3<br />
+							ldr status,[mailbox,#0x18]<br />
+						</div>
+						<p>
+							This code loads in the current status.</p>
+					</li>
+					<li>
+						<div class="armCodeBlock"><p>
+							tst status,#0x80000000<br />
+							.unreq status<br />
+							bne wait1$<br />
+						</div>
+						<p>
+							This code checks that the top bit of the status field is 0, and loops back to 3.
+							if it is not.</p>
+					</li>
+					<li>
+						<div class="armCodeBlock"><p>
+							add value,channel<br />
+							.unreq channel<br />
+						</div>
+						<p>
+							This code combines the channel and value together.</p>
+					</li>
+					<li>
+						<div class="armCodeBlock"><p>
+							str value,[mailbox,#0x20]<br />
+							.unreq value<br />
+							.unreq mailbox<br />
+							pop {pc}<br />
+						</div>
+						<p>
+							This code stores the result to the write field.</p>
+					</li>
+				</ol>
+				<p>
+					The code for MailboxRead is quite similar.</p>
+				<ol>
+					<li>Our input will be what mailbox to read from (r0). We must validate this is by checking
+						it is a real mailbox. Never forget to validate inputs.</li>
+					<li>Use GetMailboxBase to retrieve the address.</li>
+					<li>Read from the Status field.</li>
+					<li>Check the 30th bit is 0. If not, go back to 3.</li>
+					<li>Read from the Read field.</li>
+					<li>Check the mailbox is the one we want, if not go back to 3.</li>
+					<li>Return the result.</li>
+				</ol>
+				<p>
+					Let's handle each of these in order.</p>
+				<ol>
+					<li>
+						<div class="armCodeBlock"><p>
+							.globl MailboxRead<br />
+							MailboxRead:
+							<br />
+							cmp r0,#15<br />
+							movhi pc,lr<br />
+						</div>
+						<p>
+							This achieves our validation on <span class="armCodeInline">r0</span>.</p>
+					</li>
+					<li>
+						<div class="armCodeBlock"><p>
+							channel .req r1<br />
+							mov channel,r0<br />
+							push {lr}<br />
+							bl GetMailboxBase<br />
+							mailbox .req r0<br />
+						</div>
+						<p>
+							This code ensures we will not overwrite our value, or link register and calls GetMailboxBase.</p>
+					</li>
+					<li>
+						<div class="armCodeBlock"><p>
+							rightmail$:<br />
+							wait2$:<br />
+							status .req r2<br />
+							ldr status,[mailbox,#0x18]<br />
+						</div>
+						<p>
+							This code loads in the current status.</p>
+					</li>
+					<li>
+						<div class="armCodeBlock"><p>
+							tst status,#0x40000000<br />
+							.unreq status<br />
+							bne wait2$<br />
+						</div>
+						<p>
+							This code checks that the 30th bit of the status field is 0, and loops back to 3.
+							if it is not.</p>
+					</li>
+					<li>
+						<div class="armCodeBlock"><p>
+							mail .req r2<br />
+							ldr mail,[mailbox,#0]<br />
+						</div>
+						<p>
+							This code reads the next item from the mailbox.</p>
+					</li>
+					<li>
+						<div class="armCodeBlock"><p>
+							inchan .req r3<br />
+							and inchan,mail,#0b1111<br />
+							teq inchan,channel<br />
+							.unreq inchan<br />
+							bne rightmail$<br />
+							.unreq mailbox<br />
+							.unreq channel<br />
+						</div>
+						<p>
+							This code checks that the channel of the mail we just read is the one we were supplied.
+							If not it loops back to 3.</p>
+					</li>
+					<li>
+						<div class="armCodeBlock"><p>
+							and r0,mail,#0xfffffff0<br />
+							.unreq mail<br />
+							pop {pc}<br />
+						</div>
+						<p>
+							This code moves the answer (the top 28 bits of mail) to <span class="armCodeInline">
+								r0</span>.</p>
+					</li>
+				</ol>
+				<h2 id="mdgp">
+					4 My Dearest Graphics Processor</h2>
+				<p>
+					Through our new postman, we now have the ability to send a message to the graphics
+					card. What should we send though? This was certainly a difficult question for me
+					to find the answer to, as it isn't in any online manual that I have found. Nevertheless,
+					by looking at the GNU/Linux for the Raspberry Pi, we are able to work out what we
+					needed to send.</p>
+					<div class="informationBox">
+						<p>
+							Since the RAM is shared between the graphics processor and the processor on the
+							Pi, we can just send where to find our message. This is called DMA, many complicated
+							devices use this to speed up access times.</p>
+					</div>
+				<p>
+					The message is very simple. We describe the framebuffer we would like, and the graphics
+					card either agrees to our request, in which case it sends us back a 0, and fills
+					in a small questionnaire we make, or it sends back a non-zero number, in which case
+					we know it is unhappy. Unfortunately, I have no idea what any of the other numbers
+					it can send back are, nor what they mean, but only when it sends a zero it is happy.
+					Fortunately it always seems to send a zero for sensible inputs, so we don't need
+					to worry too much.</p>
+				<p>
+					For simplicity we shall design our request in advance, and store it in the .data
+					section. In a file called 'framebuffer.s' place the following code:</p>
+				<div class="armCodeBlock"><p>
+					.section .data<br />
+					.align 4<br />
+					.globl FrameBufferInfo
+					<br />
+					FrameBufferInfo:<br />
+					.int 1024 /* #0 Physical Width */<br />
+					.int 768 /* #4 Physical Height */<br />
+					.int 1024 /* #8 Virtual Width */<br />
+					.int 768 /* #12 Virtual Height */<br />
+					.int 0 /* #16 GPU - Pitch */<br />
+					.int 16 /* #20 Bit Depth */<br />
+					.int 0 /* #24 X */<br />
+					.int 0 /* #28 Y */<br />
+					.int 0 /* #32 GPU - Pointer */<br />
+					.int 0 /* #36 GPU - Size */<br />
+				</div>
+				<p>
+					This is the format of our messages to the graphics processor. The first two words
+					describe the physical width and height. The second pair is the virtual
+					width and height. The framebuffer's width and height are the virtual width and height,
+					and the GPU scales the framebuffer as need to fit the physical screen. The next word is
+					one of the ones the GPU will fill in if it grants our request. It will be the number
+					of bytes on each row of the frame buffer, in this case 2 &times; 1024 = 2048. The
+					next word is how many bits to allocate to each pixel. Using a value of 16 means
+					that the graphics processor uses High Colour mode described above. A value of 24
+					would use True Colour, and 32 would use RGBA32. The next two words are x and y offsets,
+					which mean the number of pixels to skip in the top left corner of the screen when
+					copying the framebuffer to the screen. Finally, the last two words are filled in
+					by the graphics processor, the first of which is the actual pointer to the frame
+					buffer, and the second is the size of the frame buffer in bytes.</p>
+				<div class="informationBox">
+					<p>
+						When working with devices using DMA, alignment constraints become very important.
+						The GPU expects the message to be 16 byte aligned.</p>
+				</div>
+				<p>
+					I was very careful to include a <span class="armCodeInline">.align 4</span> here.
+					As discussed before, this ensures the lowest 4 bits of the address of the next line
+					are 0. Thus, we know for sure that FrameBufferInfo will be placed at an address
+					we can send to the graphics processor, as our mailbox only sends values with the
+					low 4 bits all 0.
+				</p>
+				<p>
+					So, now that we have our message, we can write code to send it. The communication
+					will go as follows:</p>
+				<ol>
+					<li>Write the address of FrameBufferInfo + 0x40000000 to mailbox 1. </li>
+					<li>Read the result from mailbox 1. If it is not zero, we didn't ask for a proper frame
+						buffer.</li>
+					<li>Copy our images to the pointer, and they will appear on screen!</li></ol>
+				<p>
+					I've said something that I've not mentioned before in step 1. We have to add
+					0x40000000 to the address of FrameBufferInfo before sending it. This is actually a
+					special signal to the GPU of how it should write to the structure. If we just send
+					the address, the GPU will write its response, but will not make sure we can see it
+					by flushing its cache. The cache is a piece of memory where a processor stores values
+					its working on before sending them to the RAM. By adding 0x40000000, we tell the GPU not
+					to use its cache for these writes, which ensures we will be able to see the change.</p>
+				<p>
+					Since there is quite a lot going on there, it would be best to implement this as
+					a function, rather than just putting the code into main.s. We shall write a function
+					InitialiseFrameBuffer which does all this negotiation and returns the pointer to
+					the frame buffer info data above, once it has a pointer in it. For ease, we should
+					also make it so that the width, height and bit depth of the frame buffer are inputs
+					to this method, so that it is easy to change in main.s without having to get into
+					the details of the negotiation.</p>
+				<p>
+					Once again, let's write down in detail the steps we will have to take. If you're
+					feeling confident, try writing the function straight away.</p>
+				<ol>
+					<li>Validate our inputs.</li>
+					<li>Write the inputs into the frame buffer.</li>
+					<li>Send the address of the frame buffer + 0x40000000 to the mailbox.</li>
+					<li>Receive the reply from the mailbox.</li>
+					<li>If the reply is not 0, the method has failed. We should return 0 to indicate failure.</li>
+					<li>Return a pointer to the frame buffer info.</li>
+				</ol>
+				<p>
+					Now we're getting into much bigger methods than before. Below is one implementation
+					of the above.</p>
+				<ol>
+					<li>
+						<div class="armCodeBlock"><p>
+							.section .text<br />
+							.globl InitialiseFrameBuffer<br />
+							InitialiseFrameBuffer:<br />
+							width .req r0<br />
+							height .req r1<br />
+							bitDepth .req r2<br />
+							cmp width,#4096<br />
+							cmpls height,#4096<br />
+							cmpls bitDepth,#32<br />
+							result .req r0<br />
+							movhi result,#0<br />
+							movhi pc,lr<br />
+						</div>
+						<p>
+							This code checks that the width and height are less than or equal to 4096, and that
+							the bit depth is less than or equal to 32. This is once again using a trick with
+							conditional execution. Convince yourself that this works.
+						</p>
+					</li>
+					<li>
+						<div class="armCodeBlock"><p>
+							fbInfoAddr .req r4<br />
+							push {r4,lr}<br />
+							ldr fbInfoAddr,=FrameBufferInfo<br />
+							str width,[r4,#0]<br />
+							str height,[r4,#4]<br />
+							str width,[r4,#8]<br />
+							str height,[r4,#12]<br />
+							str bitDepth,[r4,#20]<br />
+							.unreq width<br />
+							.unreq height<br />
+							.unreq bitDepth<br />
+						</div>
+						<p>
+							This code simply writes into our frame buffer structure defined above. I also take
+							the opportunity to push <span class="armCodeInline">r4</span> and the link register
+							onto the stack, as we will need to store the frame buffer address in <span class="armCodeInline">
+								r4</span>.</p>
+					</li>
+					<li>
+						<div class="armCodeBlock"><p>
+							mov r0,fbInfoAddr<br />
+							add r0,#0x40000000
+							mov r1,#1<br />
+							bl MailboxWrite<br />
+						</div>
+						<p>
+							The inputs to the MailboxWrite method are the value to write in <span class="armCodeInline">
+								r0</span>, and the channel to write to in <span class="armCodeInline">r1</span>.
+						</p>
+					</li>
+					<li>
+						<div class="armCodeBlock"><p>
+							mov r0,#1<br />
+							bl MailboxRead<br />
+						</div>
+						<p>
+							The inputs to the MailboxRead method is the channel to write to in <span class="armCodeInline">
+								r0</span>, and the output is the value read.</p>
+					</li>
+					<li>
+						<div class="armCodeBlock"><p>
+							teq result,#0<br />
+							movne result,#0<br />
+							popne {r4,pc}<br />
+						</div>
+						<p>
+							This code checks if the result of the MailboxRead method is 0, and returns 0 if
+							not.</p>
+					</li>
+					<li>
+						<div class="armCodeBlock"><p>
+							mov result,fbInfoAddr<br />
+							pop {r4,pc}<br />
+							.unreq result<br />
+							.unreq fbInfoAddr<br />
+						</div>
+						<p>
+							This code finishes off and returns the frame buffer info address.</p>
+					</li>
+				</ol>
+				<h2 id="apwarwaf">
+					5 A Pixel Within a Row Within a Frame</h2>
+				<p>
+					So, we've now created our methods to communicate with the graphics processor. It
+					should now be capable of giving us the pointer to a frame buffer we can draw graphics
+					to. Let's draw something now.</p>
+				<p>
+					In this first example, we'll just draw consecutive colours to the screen. It won't
+					look pretty, but at least it will be working. How we will do this is by setting
+					each pixel in the framebuffer to a consecutive number, and continually doing so.</p>
+				<p>
+					Copy the following code to 'main.s' after <span class="armCodeInline">mov sp,#0x8000</span></p>
+				<div class="armCodeBlock"><p>
+					mov r0,#1024<br />
+					mov r1,#768<br />
+					mov r2,#16<br />
+					bl InitialiseFrameBuffer<br />
+				</div>
+				<p>
+					This code simply uses our InitialiseFrameBuffer method to create a frame buffer
+					with width 1024, height 768, and bit depth 16. You can try different values in here
+					if you wish, as long as you are consistent throughout the code. Since it's possible
+					that this method can return 0 if the graphics processor did not give us a frame
+					buffer, we had better check for this, and turn the OK LED on if it happens.</p>
+				<div class="armCodeBlock"><p>
+					teq r0,#0<br />
+					bne noError$<br />
+					<br />
+					mov r0,#16<br />
+					mov r1,#1<br />
+					bl SetGpioFunction<br />
+					mov r0,#16<br />
+					mov r1,#0<br />
+					bl SetGpio<br />
+					<br />
+					error$:<br />
+					b error$<br />
+					<br />
+					noError$:<br />
+					fbInfoAddr .req r4<br />
+					mov fbInfoAddr,r0<br />
+				</div>
+				<p>
+					Now that we have the frame buffer info address, we need to get the frame buffer
+					pointer from it, and start drawing to the screen. We will do this using two loops,
+					one going down the rows, and one going along the columns. On the Raspberry Pi, indeed
+					in most applications, pictures are stored left to right then top to bottom, so we
+					have to do the loops in the order I have said.</p>
+				<div class="armCodeBlock"><p>
+					render$:<br />
+					<div class="indent"><p>
+						fbAddr .req r3<br />
+						ldr fbAddr,[fbInfoAddr,#32]<br />
+						<br />
+						colour .req r0<br />
+						y .req r1<br />
+						mov y,#768<br />
+						drawRow$:<br />
+						<div class="indent"><p>
+							x .req r2<br />
+							mov x,#1024<br />
+							drawPixel$:<br />
+							<div class="indent"><p>
+								strh colour,[fbAddr]<br />
+								add fbAddr,#2<br />
+								sub x,#1<br />
+								teq x,#0<br />
+								bne drawPixel$<br />
+							</div><p>
+							<br />
+							sub y,#1<br />
+							add colour,#1<br />
+							teq y,#0<br />
+							bne drawRow$<br />
+							<br />
+						</div><p>
+						b render$<br />
+					</div><p>
+					<br />
+					.unreq fbAddr<br />
+					.unreq fbInfoAddr<br />
+				</div>
+				<div class="commandBox"><p>
+					<span class="armCodeInline">strh reg,[dest]</span> stores the low half word number
+					in <span class="armCodeInline">reg</span> at the address given by <span class="armCodeInline">
+						dest</span>.</div>
+				<p>
+					This is quite a large chunk of code, and has a loop within a loop within a loop.
+					To help get your head around the looping, I've indented the code which is looped,
+					depending on which loop it is in. This is quite common in most high level programming
+					languages, and the assembler simply ignores the tabs. We see here that I load in
+					the frame buffer address from the frame buffer information structure, and then loop
+					over every row, then every pixel on the row. At each pixel, I use an <span class="armCodeInline">
+						strh</span> (store half word) command to store the current colour, then increment
+					the address we're writing to. After drawing each row, we increment the colour that
+					we are drawing. After drawing the full screen, we branch back to the beginning.</p>
+				<h2 id="hallelujah">
+					6 Seeing the Light</h2>
+				<p>
+					Now you're ready to test this code on the Raspberry Pi. You should
+					see a changing gradient pattern. Be careful: until the first message is sent to the mailbox, the Raspberry Pi
+					displays a still gradient pattern between the four corners.
+					If it doesn't work, please see our troubleshooting page.
+				</p>
+				<p>
+					If it does work, congratulations! You can now control the screen! Feel free to alter
+					this code to draw whatever pattern you like. You can do some very nice gradient
+					patterns, and can compute the value of each pixel directly, since <span class="armCodeInline">
+						y</span> contains a y-coordinate for the pixel, and <span class="armCodeInline">x</span>
+					contains an x-coordinate. In the next lesson, <a href="screen02.html">Lesson 7: Screen
+						02</a>, we will look at one of the most common drawing tasks, lines.
+				</p>
+			</div>
+			<div id="pageFooter">
+				<hr />
+				<p><a rel="license" href="http://creativecommons.org/licenses/by-sa/3.0/deed.en_GB"><img alt="Creative Commons Licence" style="border-width:0" src="http://i.creativecommons.org/l/by-sa/3.0/88x31.png" /></a><br /><span xmlns:dct="http://purl.org/dc/terms/" property="dct:title">Baking Pi: Operating Systems Development</span> by <span xmlns:cc="http://creativecommons.org/ns#" property="cc:attributionName">Alex Chadwick</span> is licensed under a <a rel="license" href="http://creativecommons.org/licenses/by-sa/3.0/deed.en_GB">Creative Commons Attribution-ShareAlike 3.0 Unported License</a>.</p>
+			</div>
+		</div>
+	</div>
+</body>
+</html>

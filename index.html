@@ -1,0 +1,251 @@
+﻿<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml">
+<head>
+	<title>Baking Pi &#8211; Operating Systems Development</title>
+	<link href="../stylesheet.css" rel="Stylesheet" type="text/css" />
+	<script language="javascript" type="text/javascript" src="../script.js"></script>
+</head>
+<body>
+	<div id="contentAll">
+		<div id="courseHead">
+			<h1>
+				Baking Pi &#8211; Operating Systems Development</h1>
+		</div>
+		<div id="pageAll">
+			<div id="pageBody">
+				<p style="color: red; font-weight: bold;">
+					This course has not yet been updated to work with the Raspberry Pi models B+
+					and A+. Some elements may not work, in particular the first few lessons about the
+					LED.
+				</p>
+				<p>
+					Welcome to Baking Pi: Operating Systems Development! Course by <a href="mailto:awc32@cam.ac.uk">Alex Chadwick</a>. Version 1.0c (July 2013).</p>
+				<p>
+					This website is here to guide you through the process of developing <em>very</em>
+					basic operating systems on the <a href="http://www.raspberrypi.org/" title="Raspberry Pi homepage">
+						Raspberry Pi</a>! This website is aimed at people aged 16 and upwards, although
+					younger readers may still find some of it accessible, particularly with assistance.
+					More lessons may be added to this course in time.
+				</p>
+				<p>
+					This course takes you through the basics of operating systems development in assembly
+					code. I have tried not to assume any prior knowledge of operating systems development
+					or assembly code. It may be helpful to have some programming experience, but the
+					course should be accessible without.
+					The <a href="http://www.raspberrypi.org/phpBB3/viewforum.php?f=72">Raspberry Pi forums</a> are full of friendly people ready to help you out if you run into trouble. This course is divided into a series of 'lessons'
+					designed to be taken in order as below. Each 'lesson' includes some theory, and
+					also a practical exercise, complete with a full answer.</p>
+				<p>
+					Rather than leading the reader through the full details of creating an Operating
+					System, these tutorials focus on achieving a few common tasks separately. Hopefully,
+					by the end, the reader should know enough about Operating Systems that they could
+					try to put together everything they've learned and make one. Although the lessons
+					are generally focused on creating very specific things, there is plenty of room
+					to play with what you learn. Perhaps, after reading the lesson on functions, you
+					imagine a better style of assembly code. Perhaps after the lessons on graphics you
+					imagine a 3D operating system. Since this is an Operating Systems course, you will
+					have the power to design things how you like. If you have an idea, try it! Computer
+					Science is still a young subject, and so there is plenty left to discover!
+				</p>
+				<div class="ucampas-toc">
+				</div>
+				<h2 id="requirements">
+					1 Requirements</h2>
+				<p>
+					In order to complete this course you will need a Raspberry Pi with an SD card and
+					power supply, as well as another computer running a version of Linux, Microsoft
+					Windows or Mac OS X, capable of writing to the SD card, and installing software.
+					It is helpful, but not necessary, for your Raspberry Pi to be able to be connected
+					to a screen.</p>
+				<p>
+					In terms of software, you require a GNU compiler toolchain that targets ARMv6. Links
+					for downloads are available on the <a href="downloads.html">Downloads Page</a>, along
+					with model answers for all of the exercises.</p>
+				<h2 id="lessons">
+					2 Lessons</h2>
+				<table>
+					<caption>
+						Table 2.1 - Lessons</caption>
+					<thead>
+						<tr>
+							<th>
+							</th>
+							<th>
+								Name
+							</th>
+							<th>
+								Description
+							</th>
+						</tr>
+					</thead>
+					<tbody>
+						<tr>
+							<td>
+								0
+							</td>
+							<td>
+								<a href="introduction.html">Introduction</a>
+							</td>
+							<td>
+								This introductory lesson does not contain a practical element, but exists to explain
+								the basic concepts of what is an operating system, what is assembly code, and other
+								important basics. If you just want to get straight into practicals, it should be
+								safe to skip this lesson.
+							</td>
+						</tr>
+						<tr>
+							<th colspan="3">
+								OK LED Series (Beginner)
+							</th>
+						</tr>
+						<tr>
+							<td>
+								1
+							</td>
+							<td>
+								<a href="ok01.html">OK01</a>
+							</td>
+							<td>
+								The OK01 lesson contains an explanation about how to get started and teaches how
+								to enable the 'OK' or 'ACT' LED on the Raspberry Pi board near the RCA and USB ports.
+							</td>
+						</tr>
+						<tr>
+							<td>
+								2
+							</td>
+							<td>
+								<a href="ok02.html">OK02</a>
+							</td>
+							<td>
+								The OK02 lesson builds on OK01, by causing the 'OK' or 'ACT' LED to turn on and off repeatedly.
+							</td>
+						</tr>
+						<tr>
+							<td>
+								3
+							</td>
+							<td>
+								<a href="ok03.html">OK03</a>
+							</td>
+							<td>
+								The OK03 lesson builds on OK02 by teaching how to use functions in assembly to make
+								more reusable and rereadable code.
+							</td>
+						</tr>
+						<tr>
+							<td>
+								4
+							</td>
+							<td>
+								<a href="ok04.html">OK04</a>
+							</td>
+							<td>
+								The OK04 lesson builds on OK03 by teaching how to use the timer to flash the 'OK' or 'ACT'
+								LED at precise intervals.
+							</td>
+						</tr>
+						<tr>
+							<td>
+								5
+							</td>
+							<td>
+								<a href="ok05.html">OK05</a>
+							</td>
+							<td>
+								The OK05 lesson builds on OK04 using it to flash the SOS morse code pattern (...---...).
+							</td>
+						</tr>
+						<tr>
+							<th colspan="3">
+								Screen Series (Advanced)
+							</th>
+						</tr>
+						<tr>
+							<td>
+								6
+							</td>
+							<td>
+								<a href="screen01.html">Screen01</a>
+							</td>
+							<td>
+								The Screen01 lesson teaches some basic theory about graphics, and then applies it
+								to display a gradient pattern to the screen or TV.
+							</td>
+						</tr>
+						<tr>
+							<td>
+								7
+							</td>
+							<td>
+								<a href="screen02.html">Screen02</a>
+							</td>
+							<td>
+								The Screen02 lesson builds on Screen01, by teaching how to draw lines and also
+								a small feature on generating pseudo random numbers.
+							</td>
+						</tr>
+						<tr>
+							<td>
+								8
+							</td>
+							<td>
+								<a href="screen03.html">Screen03</a>
+							</td>
+							<td>
+								The Screen03 lesson builds on Screen02 by teaching how to draw text to the screen,
+								and introduces the concept of the kernel command line.
+							</td>
+						</tr>
+						<tr>
+							<td>
+								9
+							</td>
+							<td>
+								<a href="screen04.html">Screen04</a>
+							</td>
+							<td>
+								The Screen04 lesson builds on Screen03 by teaching how to manipulate text to display
+								computed values on the screen.
+							</td>
+						</tr>
+						<tr>
+							<th colspan="3">
+								Input Series (Advanced)
+							</th>
+						</tr>
+						<tr>
+							<td>
+								10
+							</td>
+							<td>
+								<a href="input01.html">Input01</a>
+							</td>
+							<td>
+								The Input01 lesson teaches some theory about drivers, and linking programs, as well
+								as keyboards. It is then applied to print out input characters to the screen.
+							</td>
+						</tr>
+						<tr>
+							<td>
+								11
+							</td>
+							<td>
+								<a href="input02.html">Input02</a>
+							</td>
+							<td>
+								The Input02 lesson builds on Input01 by teaching how to make a command line interface
+								for an Operating System.
+							</td>
+						</tr>
+					</tbody>
+				</table>
+			</div>
+			<div id="pageFooter">
+			<hr />
+			<p><a rel="license" href="http://creativecommons.org/licenses/by-sa/3.0/deed.en_GB"><img alt="Creative Commons Licence" style="border-width:0" src="http://i.creativecommons.org/l/by-sa/3.0/88x31.png" /></a><br /><span xmlns:dct="http://purl.org/dc/terms/" property="dct:title">Baking Pi: Operating Systems Development</span> by <span xmlns:cc="http://creativecommons.org/ns#" property="cc:attributionName">Alex Chadwick</span> is licensed under a <a rel="license" href="http://creativecommons.org/licenses/by-sa/3.0/deed.en_GB">Creative Commons Attribution-ShareAlike 3.0 Unported License</a>.</p>
+			</div>
+		</div>
+	</div>
+</body>
+</html>

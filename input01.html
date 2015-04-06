@@ -1,0 +1,1781 @@
+﻿<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml">
+<head>
+	<title>Lesson 10 Input01</title>
+	<link href="stylesheet.css" rel="Stylesheet" type="text/css" />
+	<script language="javascript" type="text/javascript" src="script.js"></script>
+</head>
+<body>
+	<div id="contentAll">
+		<div id="courseHead">
+			<h1>
+				Lesson 10 Input01</h1>
+		</div>
+		<div id="pageAll">
+			<div id="pageBody">
+				<p>
+					Welcome to the Input lesson series. In this series, you will learn how to receive
+					inputs to the Raspberry Pi using the keyboard. We will start with just revealing
+					the input, and then move to a more traditional text prompt.
+				</p>
+				<p>
+					This first input lesson teaches some theory about drivers and linking, as well
+					as about keyboards and ends up displaying text on the screen.</p>
+				<div class="ucampas-toc">
+				</div>
+				<h2 id="gs">
+					1 Getting Started</h2>
+				<p>
+					It is expected that you have completed the OK series, and it would be helpful to
+					have completed the Screen series. Many of the files from that series will be called,
+					without comment. If you do not have these files, or prefer to use a correct implementation,
+					download the template for this lesson from the <a href="downloads.html">Downloads</a>
+					page. If you're using your own implementation, please remove everything after your
+					call to SetGraphicsAddress.</p>
+				<h2 id="usb">
+					2 USB</h2>
+				<div class="informationBox">
+					<p>
+						The USB standard was designed to make simple hardware in exchange for complex software.</p>
+				</div>
+				<p>
+					As you are no doubt aware, the Raspberry Pi model B has two USB ports, commonly
+					used for connecting a mouse and keyboard. This was a very good design decision,
+					USB is a very generic connector, and many different kinds of device use it. It's
+					simple to build new devices for, simple to write device drivers for, and is highly
+					extensible thanks to USB hubs. Could it get any better? Well, no, in fact for an
+					Operating Systems developer this is our worst nightmare. The USB standard is huge.
+					I really mean it this time, it is over 700 pages, before you've even thought about
+					connecting a device.</p>
+				<p>
+					I spoke to a number of other hobbyist Operating Systems developers about this and
+					they all say one thing: don't bother. "It will take too long to implement", "You
+					won't be able to write a tutorial on it" and "It will be of little benefit". In
+					many ways they are right, I'm not able to write a tutorial on the USB standard,
+					as it would take weeks. I also can't teach how to write device drivers for all the
+					different devices, so it is useless on its own. However, I can do the next best
+					thing: Get a working USB driver, get a keyboard driver, and then teach how to use
+					these in an Operating System. I set out searching for a free driver that would run
+					in an operating system that doesn't even know what a file is yet, but I couldn't
+					find one. They were all too high level. So, I attempted to write one. Everybody
+					was right, this took weeks to do. However, I'm pleased to say I did get one that
+					works with no external help from the Operating System, and can talk to a mouse and
+					keyboard. It is by no means complete, efficient, or correct, but it does work. It
+					has been written in C and the full source code can be found on the downloads page
+					for those interested.
+				</p>
+				<p>
+					So, this tutorial won't be a lesson on the USB standard (at all). Instead we'll
+					look at how to work with other people's code.</p>
+				<h2 id="linking">
+					3 Linking</h2>
+				<div class="informationBox">
+					<p>
+						Linking allows us to make reusable code 'libraries' that anyone can use in their
+						program.</p>
+				</div>
+				<p>
+					Since we're about to incorporate external code into the Operating System, we need
+					to talk about linking. Linking is a process which is applied to programs or Operating
+					System to link in functions. What this means is that when a program is made, we
+					don't necessarily code every function (almost certainly not in fact). Linking is
+					what we do to make our program link to functions in other people's code. This has
+					actually been going on all along in our Operating Systems, as the linker links together
+					all of the different files, each of which is compiled separately.</p>
+				<div class="informationBox">
+					<p>
+						Programs often just call libraries, which call other libraries and so on until eventually
+						they call an Operating System library which we would write.</p>
+				</div>
+				<p>
+					There are two types of linking: static and dynamic. Static linking is like what
+					goes on when we make our Operating Systems. The linker finds all the addresses of
+					the functions, and writes them into the code, before the program is finished. Dynamic
+					linking is linking that occurs after the program is 'complete'. When it is loaded,
+					the dynamic linker goes through the program and links any functions which are not
+					in the program to libraries in the Operating System. This is one of the jobs our
+					Operating System should eventually be capable of, but for now everything will be
+					statically linked.</p>
+				<p>
+					The USB driver I have written is suitable for static linking. This means I give
+					you the compiled code for each of my files, and then the linker finds functions
+					in your code which are not defined in your code, and links them to functions in
+					my code. On the <a href="downloads.html">Downloads</a> page for this lesson is a
+					makefile and my USB driver, which you will need to continue. Download them and replace
+					the makefile in your code with this one, and also put the driver in the same folder
+					as that makefile.</p>
+				<h2 id="keyboards">
+					4 Keyboards</h2>
+				<p>
+					In order to get input into our Operating System, we need to understand at some level
+					how keyboards actually work. Keyboards have two types of keys: Normal and Modifier
+					keys. The normal keys are the letters, numbers, function keys, etc. They constitute
+					almost every key on the keyboard. The modifiers are up to 8 special keys. These
+					are left shift, right shift, left control, right control, left alt, right alt, left
+					GUI and right GUI. The keyboard can detect any combination of the modifier keys
+					being held, as well as up to 6 normal keys. Every time a key changes (i.e. is pushed
+					or released), it reports this to the computer. Typically, keyboards also have three
+					LEDs for Caps Lock, Num Lock and Scroll Lock, which are controlled by the computer,
+					not the keyboard itself. Keyboards may have many more lights such as power, mute,
+					etc.
+				</p>
+				<p>
+					In order to help standardise USB keyboards, a table of values was produced, such
+					that every keyboard key ever is given a unique number, as well as every conceivable
+					LED. The table below lists the first 126 of values.
+				</p>
+				<table>
+					<caption>
+						Table 4.1 USB Keyboard Keys</caption>
+					<thead>
+						<tr>
+							<th>
+								Number
+							</th>
+							<th>
+								Description
+							</th>
+							<th>
+								Number
+							</th>
+							<th>
+								Description
+							</th>
+							<th>
+								Number
+							</th>
+							<th>
+								Description
+							</th>
+							<th>
+								Number
+							</th>
+							<th>
+								Description
+							</th>
+						</tr>
+					</thead>
+					<tbody>
+						<tr>
+							<td>
+								4
+							</td>
+							<td>
+								a and A
+							</td>
+							<td>
+								5
+							</td>
+							<td>
+								b and B
+							</td>
+							<td>
+								6
+							</td>
+							<td>
+								c and C
+							</td>
+							<td>
+								7
+							</td>
+							<td>
+								d and D
+							</td>
+						</tr>
+						<tr>
+							<td>
+								8
+							</td>
+							<td>
+								e and E
+							</td>
+							<td>
+								9
+							</td>
+							<td>
+								f and F
+							</td>
+							<td>
+								10
+							</td>
+							<td>
+								g and G
+							</td>
+							<td>
+								11
+							</td>
+							<td>
+								h and H
+							</td>
+						</tr>
+						<tr>
+							<td>
+								12
+							</td>
+							<td>
+								i and I
+							</td>
+							<td>
+								13
+							</td>
+							<td>
+								j and J
+							</td>
+							<td>
+								14
+							</td>
+							<td>
+								k and K
+							</td>
+							<td>
+								15
+							</td>
+							<td>
+								l and L
+							</td>
+						</tr>
+						<tr>
+							<td>
+								16
+							</td>
+							<td>
+								m and M
+							</td>
+							<td>
+								17
+							</td>
+							<td>
+								n and N
+							</td>
+							<td>
+								18
+							</td>
+							<td>
+								o and O
+							</td>
+							<td>
+								19
+							</td>
+							<td>
+								p and P
+							</td>
+						</tr>
+						<tr>
+							<td>
+								20
+							</td>
+							<td>
+								q and Q
+							</td>
+							<td>
+								21
+							</td>
+							<td>
+								r and R
+							</td>
+							<td>
+								22
+							</td>
+							<td>
+								s and S
+							</td>
+							<td>
+								23
+							</td>
+							<td>
+								t and T
+							</td>
+						</tr>
+						<tr>
+							<td>
+								24
+							</td>
+							<td>
+								u and U
+							</td>
+							<td>
+								25
+							</td>
+							<td>
+								v and V
+							</td>
+							<td>
+								26
+							</td>
+							<td>
+								w and W
+							</td>
+							<td>
+								27
+							</td>
+							<td>
+								x and X
+							</td>
+						</tr>
+						<tr>
+							<td>
+								28
+							</td>
+							<td>
+								y and Y
+							</td>
+							<td>
+								29
+							</td>
+							<td>
+								z and Z
+							</td>
+							<td>
+								30
+							</td>
+							<td>
+								1 and !
+							</td>
+							<td>
+								31
+							</td>
+							<td>
+								2 and @
+							</td>
+						</tr>
+						<tr>
+							<td>
+								32
+							</td>
+							<td>
+								3 and #
+							</td>
+							<td>
+								33
+							</td>
+							<td>
+								4 and $
+							</td>
+							<td>
+								34
+							</td>
+							<td>
+								5 and %
+							</td>
+							<td>
+								35
+							</td>
+							<td>
+								6 and ^
+							</td>
+						</tr>
+						<tr>
+							<td>
+								36
+							</td>
+							<td>
+								7 and &
+							</td>
+							<td>
+								37
+							</td>
+							<td>
+								8 and *
+							</td>
+							<td>
+								38
+							</td>
+							<td>
+								9 and (
+							</td>
+							<td>
+								39
+							</td>
+							<td>
+								0 and )
+							</td>
+						</tr>
+						<tr>
+							<td>
+								40
+							</td>
+							<td>
+								Return (Enter)
+							</td>
+							<td>
+								41
+							</td>
+							<td>
+								Escape
+							</td>
+							<td>
+								42
+							</td>
+							<td>
+								Delete (Backspace)
+							</td>
+							<td>
+								43
+							</td>
+							<td>
+								Tab
+							</td>
+						</tr>
+						<tr>
+							<td>
+								44
+							</td>
+							<td>
+								Spacebar
+							</td>
+							<td>
+								45
+							</td>
+							<td>
+								- and _
+							</td>
+							<td>
+								46
+							</td>
+							<td>
+								= and +
+							</td>
+							<td>
+								47
+							</td>
+							<td>
+								[ and {
+							</td>
+						</tr>
+						<tr>
+							<td>
+								48
+							</td>
+							<td>
+								] and }
+							</td>
+							<td>
+								49
+							</td>
+							<td>
+								\ and |
+							</td>
+							<td>
+								50
+							</td>
+							<td>
+								# and ~
+							</td>
+							<td>
+								51
+							</td>
+							<td>
+								; and :
+							</td>
+						</tr>
+						<tr>
+							<td>
+								52
+							</td>
+							<td>
+								' and "
+							</td>
+							<td>
+								53
+							</td>
+							<td>
+								` and ~
+							</td>
+							<td>
+								54
+							</td>
+							<td>
+								, and &lt;
+							</td>
+							<td>
+								55
+							</td>
+							<td>
+								. and &gt;
+							</td>
+						</tr>
+						<tr>
+							<td>
+								56
+							</td>
+							<td>
+								/ and ?
+							</td>
+							<td>
+								57
+							</td>
+							<td>
+								Caps Lock
+							</td>
+							<td>
+								58
+							</td>
+							<td>
+								F1
+							</td>
+							<td>
+								59
+							</td>
+							<td>
+								F2
+							</td>
+						</tr>
+						<tr>
+							<td>
+								60
+							</td>
+							<td>
+								F3
+							</td>
+							<td>
+								61
+							</td>
+							<td>
+								F4
+							</td>
+							<td>
+								62
+							</td>
+							<td>
+								F5
+							</td>
+							<td>
+								63
+							</td>
+							<td>
+								F6
+							</td>
+						</tr>
+						<tr>
+							<td>
+								64
+							</td>
+							<td>
+								F7
+							</td>
+							<td>
+								65
+							</td>
+							<td>
+								F8
+							</td>
+							<td>
+								66
+							</td>
+							<td>
+								F9
+							</td>
+							<td>
+								67
+							</td>
+							<td>
+								F10
+							</td>
+						</tr>
+						<tr>
+							<td>
+								68
+							</td>
+							<td>
+								F11
+							</td>
+							<td>
+								69
+							</td>
+							<td>
+								F12
+							</td>
+							<td>
+								70
+							</td>
+							<td>
+								Print Screen
+							</td>
+							<td>
+								71
+							</td>
+							<td>
+								Scroll Lock
+							</td>
+						</tr>
+						<tr>
+							<td>
+								72
+							</td>
+							<td>
+								Pause
+							</td>
+							<td>
+								73
+							</td>
+							<td>
+								Insert
+							</td>
+							<td>
+								74
+							</td>
+							<td>
+								Home
+							</td>
+							<td>
+								75
+							</td>
+							<td>
+								Page Up
+							</td>
+						</tr>
+						<tr>
+							<td>
+								76
+							</td>
+							<td>
+								Delete forward
+							</td>
+							<td>
+								77
+							</td>
+							<td>
+								End
+							</td>
+							<td>
+								78
+							</td>
+							<td>
+								Page Down
+							</td>
+							<td>
+								79
+							</td>
+							<td>
+								Right Arrow
+							</td>
+						</tr>
+						<tr>
+							<td>
+								80
+							</td>
+							<td>
+								Left Arrow
+							</td>
+							<td>
+								81
+							</td>
+							<td>
+								Down Arrow
+							</td>
+							<td>
+								82
+							</td>
+							<td>
+								Up Arrow
+							</td>
+							<td>
+								83
+							</td>
+							<td>
+								Num Lock
+							</td>
+						</tr>
+						<tr>
+							<td>
+								84
+							</td>
+							<td>
+								Keypad /
+							</td>
+							<td>
+								85
+							</td>
+							<td>
+								Keypad *
+							</td>
+							<td>
+								86
+							</td>
+							<td>
+								Keypad -
+							</td>
+							<td>
+								87
+							</td>
+							<td>
+								Keypad +
+							</td>
+						</tr>
+						<tr>
+							<td>
+								88
+							</td>
+							<td>
+								Keypad Enter
+							</td>
+							<td>
+								89
+							</td>
+							<td>
+								Keypad 1 and End
+							</td>
+							<td>
+								90
+							</td>
+							<td>
+								Keypad 2 and Down Arrow
+							</td>
+							<td>
+								91
+							</td>
+							<td>
+								Keypad 3 and Page Down
+							</td>
+						</tr>
+						<tr>
+							<td>
+								92
+							</td>
+							<td>
+								Keypad 4 and Left Arrow
+							</td>
+							<td>
+								93
+							</td>
+							<td>
+								Keypad 5
+							</td>
+							<td>
+								94
+							</td>
+							<td>
+								Keypad 6 and Right Arrow
+							</td>
+							<td>
+								95
+							</td>
+							<td>
+								Keypad 7 and Home
+							</td>
+						</tr>
+						<tr>
+							<td>
+								96
+							</td>
+							<td>
+								Keypad 8 and Up Arrow
+							</td>
+							<td>
+								97
+							</td>
+							<td>
+								Keypad 9 and Page Up
+							</td>
+							<td>
+								98
+							</td>
+							<td>
+								Keypad 0 and Insert
+							</td>
+							<td>
+								99
+							</td>
+							<td>
+								Keypad . and Delete
+							</td>
+						</tr>
+						<tr>
+							<td>
+								100
+							</td>
+							<td>
+								\ and |
+							</td>
+							<td>
+								101
+							</td>
+							<td>
+								Application
+							</td>
+							<td>
+								102
+							</td>
+							<td>
+								Power
+							</td>
+							<td>
+								103
+							</td>
+							<td>
+								Keypad =
+							</td>
+						</tr>
+						<tr>
+							<td>
+								104
+							</td>
+							<td>
+								F13
+							</td>
+							<td>
+								105
+							</td>
+							<td>
+								F14
+							</td>
+							<td>
+								106
+							</td>
+							<td>
+								F15
+							</td>
+							<td>
+								107
+							</td>
+							<td>
+								F16
+							</td>
+						</tr>
+						<tr>
+							<td>
+								108
+							</td>
+							<td>
+								F17
+							</td>
+							<td>
+								109
+							</td>
+							<td>
+								F18
+							</td>
+							<td>
+								110
+							</td>
+							<td>
+								F19
+							</td>
+							<td>
+								111
+							</td>
+							<td>
+								F20
+							</td>
+						</tr>
+						<tr>
+							<td>
+								112
+							</td>
+							<td>
+								F21
+							</td>
+							<td>
+								113
+							</td>
+							<td>
+								F22
+							</td>
+							<td>
+								114
+							</td>
+							<td>
+								F23
+							</td>
+							<td>
+								115
+							</td>
+							<td>
+								F24
+							</td>
+						</tr>
+						<tr>
+							<td>
+								116
+							</td>
+							<td>
+								Execute
+							</td>
+							<td>
+								117
+							</td>
+							<td>
+								Help
+							</td>
+							<td>
+								118
+							</td>
+							<td>
+								Menu
+							</td>
+							<td>
+								119
+							</td>
+							<td>
+								Select
+							</td>
+						</tr>
+						<tr>
+							<td>
+								120
+							</td>
+							<td>
+								Stop
+							</td>
+							<td>
+								121
+							</td>
+							<td>
+								Again
+							</td>
+							<td>
+								122
+							</td>
+							<td>
+								Undo
+							</td>
+							<td>
+								123
+							</td>
+							<td>
+								Cut
+							</td>
+						</tr>
+						<tr>
+							<td>
+								124
+							</td>
+							<td>
+								Copy
+							</td>
+							<td>
+								125
+							</td>
+							<td>
+								Paste
+							</td>
+							<td>
+								126
+							</td>
+							<td>
+								Find
+							</td>
+							<td>
+								127
+							</td>
+							<td>
+								Mute
+							</td>
+						</tr>
+						<tr>
+							<td>
+								128
+							</td>
+							<td>
+								Volume Up
+							</td>
+							<td>
+								129
+							</td>
+							<td>
+								Volume Down
+							</td>
+						</tr>
+					</tbody>
+				</table>
+				<p>
+					The full list can be found in section 10, page 53 of <a class="icon-pdf" href="downloads/hut1_12v2.pdf">
+						HID Usage Tables 1.12</a>.</p>
+				<h2 id="driver">
+					5 The Nut Behind the Wheel</h2>
+				<div class="informationBox">
+					<p>
+						These summaries and the code they describe form an API - Application Product Interface.</p>
+				</div>
+				<p>
+					Normally, when you work with someone else's code, they provide a summary of their
+					methods, what they do and roughly how they work, as well as how they can go wrong.
+					Here is a table of the relevant instructions required to use my USB driver.</p>
+				<table>
+					<caption>
+						Table 5.1 Keyboard related functions in CSUD</caption>
+					<thead>
+						<tr>
+							<th>
+								Function
+							</th>
+							<th>
+								Arguments
+							</th>
+							<th>
+								Returns
+							</th>
+							<th>
+								Description
+							</th>
+						</tr>
+					</thead>
+					<tbody>
+						<tr>
+							<td>
+								UsbInitialise
+							</td>
+							<td>
+								None
+							</td>
+							<td>
+								r0 is result code
+							</td>
+							<td>
+								This method is the all-in-one method that loads the USB driver, enumerates all devices
+								and attempts to communicate with them. This method generally takes about a second
+								to execute, though with a few USB hubs plugged in this can be significantly longer.
+								After this method is completed methods in the keyboard driver become available,
+								regardless of whether or not a keyboard is indeed inserted. Result code explained
+								below.
+							</td>
+						</tr>
+						<tr>
+							<td>
+								UsbCheckForChange
+							</td>
+							<td>
+								None
+							</td>
+							<td>
+								None
+							</td>
+							<td>
+								Essentially provides the same effect as UsbInitialise, but does not provide the
+								same one time initialisation. This method checks every port on every connected hub
+								recursively, and adds new devices if they have been added. This should be very quick
+								if there are no changes, but can take up to a few seconds if a hub with many devices
+								is attached.
+							</td>
+						</tr>
+						<tr>
+							<td>
+								KeyboardCount
+							</td>
+							<td>
+								None
+							</td>
+							<td>
+								r0 is count
+							</td>
+							<td>
+								Returns the number of keyboards currently connected and detected. UsbCheckForChange
+								may update this. Up to 4 keyboards are supported by default. Up to this many keyboards
+								may be accessed through this driver.
+							</td>
+						</tr>
+						<tr>
+							<td>
+								KeyboardGetAddress
+							</td>
+							<td>
+								r0 is index
+							</td>
+							<td>
+								r0 is address
+							</td>
+							<td>
+								Retrieves the address of a given keyboard. All other functions take a keyboard address
+								in order to know which keyboard to access. Thus, to communicate with a keyboard,
+								first check the count, then retrieve the address, then use other methods. Note,
+								the order of keyboards that this method returns may change after calls to UsbCheckForChange.
+							</td>
+						</tr>
+						<tr>
+							<td>
+								KeyboardPoll
+							</td>
+							<td>
+								r0 is address
+							</td>
+							<td>
+								r0 is result code
+							</td>
+							<td>
+								Reads in the current key state from the keyboard. This operates via polling the
+								device directly, contrary to the best practice. This means that if this method is
+								not called frequently enough, a key press could be missed. All reading methods simply
+								return the value as of the last poll.
+							</td>
+						</tr>
+						<tr>
+							<td>
+								KeyboardGetModifiers
+							</td>
+							<td>
+								r0 is address
+							</td>
+							<td>
+								r0 is modifier state
+							</td>
+							<td>
+								Retrieves the status of the modifier keys as of the last poll. These are the shift,
+								alt control and GUI keys on both sides. This is returned as a bit field, such that
+								a 1 in the bit 0 means left control is held, bit 1 means left shift, bit 2 means
+								left alt, bit 3 means left GUI and bits 4 to 7 mean the right versions of those
+								previous. If there is a problem r0 contains 0.
+							</td>
+						</tr>
+						<tr>
+							<td>
+								KeyboardGetKeyDownCount
+							</td>
+							<td>
+								r0 is address
+							</td>
+							<td>
+								r0 is count
+							</td>
+							<td>
+								Retrieves the number of keys currently held down on the keyboard. This excludes modifier
+								keys. Normally, this cannot go above 6. If there is an error this method returns
+								0.
+							</td>
+						</tr>
+						<tr>
+							<td>
+								KeyboardGetKeyDown
+							</td>
+							<td>
+								r0 is address, r1 is key number
+							</td>
+							<td>
+								r0 is scan code
+							</td>
+							<td>
+								Retrieves the scan code (see Table 4.1) of a particular held down key. Normally,
+								to work out which keys are down, call KeyboardGetKeyDownCount and then call KeyboardGetKeyDown
+								up to that many times with increasing values of r1 to determine which keys are down.
+								Returns 0 if there is a problem. It is safe (but not recommended) to call this method
+								without calling KeyboardGetKeyDownCount and interpret 0s as keys not held. Note,
+								the order or scan codes can change randomly (some keyboards sort numerically, some
+								sort temporally, no guarantees are made).
+							</td>
+						</tr>
+						<tr>
+							<td>
+								KeyboardGetKeyIsDown
+							</td>
+							<td>
+								r0 is address, r1 is scan code
+							</td>
+							<td>
+								r0 is status
+							</td>
+							<td>
+								Alternative to KeyboardGetKeyDown, checks if a particular scan code is among the
+								held down keys. Returns 0 if not, or a non-zero value if so. Faster when detecting
+								particular scan codes (e.g. looking for ctrl+c). On error, returns 0.
+							</td>
+						</tr>
+						<tr>
+							<td>
+								KeyboardGetLedSupport
+							</td>
+							<td>
+								r0 is address
+							</td>
+							<td>
+								r0 is LEDs
+							</td>
+							<td>
+								Checks which LEDs a particular keyboard supports. Bit 0 being 1 represents Number
+								Lock, bit 1 represents Caps Lock, bit 2 represents Scroll Lock, bit 3 represents
+								Compose, bit 4 represents Kana, bit 5 represents Power, bit 6 represents Mute and
+								bit 7 represents Compose. As per the USB standard, none of these LEDs update automatically
+								(e.g. Caps Lock must be set manually when the Caps Lock scan code is detected).
+							</td>
+						</tr>
+						<tr>
+							<td>
+								KeyboardSetLeds
+							</td>
+							<td>
+								r0 is address, r1 is LEDs
+							</td>
+							<td>
+								r0 is result code
+							</td>
+							<td>
+								Attempts to turn on/off the specified LEDs on the keyboard. See below for result
+								code values. See KeyboardGetLedSupport for LEDs' values.
+							</td>
+						</tr>
+					</tbody>
+				</table>
+				<div class="informationBox">
+					<p>
+						Result codes are an easy way to handle errors, but often more elegant solutions
+						exist in higher level code.</p>
+				</div>
+				<p>
+					Several methods return 'result codes'. These are commonplace in C code, and are
+					just numbers which represent what happened in a method call. By convention, 0 always
+					indicates success. The following result codes are used by this driver.</p>
+				<table>
+					<caption>
+						Table 5.2 - CSUD Result Codes</caption>
+					<thead>
+						<tr>
+							<th>
+								Code
+							</th>
+							<th>
+								Description
+							</th>
+						</tr>
+					</thead>
+					<tr>
+						<td>
+							0
+						</td>
+						<td>
+							Method completed successfully.
+						</td>
+					</tr>
+					<tr>
+						<td>
+							-2
+						</td>
+						<td>
+							Argument: A method was called with an invalid argument.
+						</td>
+					</tr>
+					<tr>
+						<td>
+							-4
+						</td>
+						<td>
+							Device: The device did not respond correctly to the request.
+						</td>
+					</tr>
+					<tr>
+						<td>
+							-5
+						</td>
+						<td>
+							Incompatible: The driver is not compatible with this request or device.
+						</td>
+					</tr>
+					<tr>
+						<td>
+							-6
+						</td>
+						<td>
+							Compiler: The driver was compiled incorrectly, and is broken.
+						</td>
+					</tr>
+					<tr>
+						<td>
+							-7
+						</td>
+						<td>
+							Memory: The driver ran out of memory.
+						</td>
+					</tr>
+					<tr>
+						<td>
+							-8
+						</td>
+						<td>
+							Timeout: The device did not respond in the expected time.
+						</td>
+					</tr>
+					<tr>
+						<td>
+							-9
+						</td>
+						<td>
+							Disconnect: The device requested has disconnected, and cannot be used.
+						</td>
+					</tr>
+				</table>
+				<p>
+					The general usage of the driver is as follows:</p>
+				<ol>
+					<li>Call UsbInitialise</li>
+					<li>Call UsbCheckForChange</li>
+					<li>Call KeyboardCount</li>
+					<li>If this is 0, go to 2.</li>
+					<li>For each keyboard you support:
+						<ol>
+							<li>Call KeyboardGetAddress</li>
+							<li>Call KeybordGetKeyDownCount</li>
+							<li>For each key down:
+								<ol>
+									<li>Check whether or not it has just been pushed</li>
+									<li>Store that the key is down</li>
+								</ol>
+							</li>
+							<li>For each key stored:
+								<ol>
+									<li>Check whether or not key is released</li>
+									<li>Remove key if released</li>
+								</ol>
+							</li>
+						</ol>
+					</li>
+					<li>Perform actions based on keys pushed/released</li>
+					<li>Go to 2.</li>
+				</ol>
+				<p>
+					Ultimately, you may do whatever you wish to with the keyboard, and these methods
+					should allow you to access all of its functionality. Over the next 2 lessons, we
+					shall look at completing the input side of a text terminal, similarly to most command
+					line computers, and interpreting the commands. In order to do this, we're going
+					to need to have keyboard inputs in a more useful form. You may notice that my driver
+					is (deliberately) unhelpful, because it doesn't have methods to deduce whether or
+					not a key has just been pushed down or released, it only has methods about what
+					is currently held down. This means we'll need to write such methods ourselves.</p>
+				<h2 id="ua">
+					6 Updates Available</h2>
+				<div class="informationBox">
+					<p>
+						Repeatedly checking for updates is called 'polling'. This is in contrast to interrupt
+						driven IO, where the device sends a signal when data is ready.</p>
+				</div>
+				<p>
+					First of all, let's implement a method KeyboardUpdate which detects the first keyboard
+					and uses its poll method to get the current input, as well as saving the last inputs
+					for comparison. We can then use this data with other methods to translate scan codes
+					to keys. The method should do precisely the following:
+				</p>
+				<ol>
+					<li>Retrieve a stored keyboard address (initially 0).</li>
+					<li>If this is not 0, go to 9.</li>
+					<li>Call UsbCheckForChange to detect new keyboards.</li>
+					<li>Call KeyboardCount to detect how many keyboards are present.</li>
+					<li>If this is 0 store the address as 0 and return; we can't do anything with no keyboard.</li>
+					<li>Call KeyboardGetAddress with parameter 0 to get the first keyboard's address.</li>
+					<li>Store this address.</li>
+					<li>If this is 0, return; there is some problem.</li>
+					<li>Call KeyboardGetKeyDown 6 times to get each key currently down and store them</li>
+					<li>Call KeyboardPoll</li>
+					<li>If the result is non-zero go to 3. There is some problem (such as disconnected keyboard).</li>
+				</ol>
+				<p>
+					To store the values mentioned above, we will need the following values in the .data
+					section.</p>
+				<div class="armCodeBlock">
+					<p>
+						.section .data<br />
+						.align 2<br />
+						KeyboardAddress:<br />
+						.int 0<br />
+						KeyboardOldDown:<br />
+						.rept 6<br />
+						.hword 0<br />
+						.endr<br />
+				</div>
+				<div class="commandBox">
+					<p>
+						<span class="armCodeInline">.hword num</span> inserts the half word constant <span
+							class="armCodeInline">num</span> into the file directly.
+					</p>
+				</div>
+				<div class="commandBox">
+					<p>
+						<span class="armCodeInline">.rept num [commands] .endr</span> copies the commands
+						<span class="armCodeInline">commands</span> to the output <span class="armCodeInline">
+							num</span> times.
+					</p>
+				</div>
+				<p>
+					Try to implement the method yourself. My implementation for this is as follows:</p>
+				<ol>
+					<li>
+						<div class="armCodeBlock">
+							<p>
+								.section .text<br />
+								.globl KeyboardUpdate<br />
+								KeyboardUpdate:<br />
+								push {r4,r5,lr}<br />
+								<br />
+								kbd .req r4<br />
+								ldr r0,=KeyboardAddress<br />
+								ldr kbd,[r0]<br />
+						</div>
+						We load in the keyboard address.</li>
+					<li>
+						<div class="armCodeBlock">
+							<p>
+								teq kbd,#0<br />
+								bne haveKeyboard$<br />
+						</div>
+						If the address is non-zero, we have a keyboard. Calling UsbCheckForChanges is slow,
+						and so if everything works we avoid it. </li>
+					<li>
+						<div class="armCodeBlock">
+							<p>
+								getKeyboard$:<br />
+								bl UsbCheckForChange<br />
+						</div>
+						If we don't have a keyboard, we have to check for new devices. </li>
+					<li>
+						<div class="armCodeBlock">
+							<p>
+								bl KeyboardCount<br />
+						</div>
+						Now we see if a new keyboard has been added. </li>
+					<li>
+						<div class="armCodeBlock">
+							<p>
+								teq r0,#0<br />
+								ldreq r1,=KeyboardAddress<br />
+								streq r0,[r1]<br />
+								beq return$<br />
+						</div>
+						There are no keyboards, so we have no keyboard address. </li>
+					<li>
+						<div class="armCodeBlock">
+							<p>
+								mov r0,#0<br />
+								bl KeyboardGetAddress<br />
+						</div>
+						Let's just get the address of the first keyboard. You may want to allow more.
+					</li>
+					<li>
+						<div class="armCodeBlock">
+							<p>
+								ldr r1,=KeyboardAddress<br />
+								str r0,[r1]<br />
+						</div>
+						Store the keyboard's address. </li>
+					<li>
+						<div class="armCodeBlock">
+							<p>
+								teq r0,#0<br />
+								beq return$<br />
+								mov kbd,r0<br />
+						</div>
+						If we have no address, there is nothing more to do. </li>
+					<li>
+						<div class="armCodeBlock">
+							<p>
+								saveKeys$:<br />
+								<div class="indent">
+									<p>
+										mov r0,kbd<br />
+										mov r1,r5<br />
+										bl KeyboardGetKeyDown<br />
+										<br />
+										ldr r1,=KeyboardOldDown<br />
+										add r1,r5,lsl #1<br />
+										strh r0,[r1]<br />
+										add r5,#1<br />
+										cmp r5,#6<br />
+										blt saveKeys$<br />
+								</div>
+						</div>
+						Loop through all the keys, storing them in KeyboardOldDown. If we ask for too many,
+						this returns 0 which is fine. </li>
+					<li>
+						<div class="armCodeBlock">
+							<p>
+								mov r0,kbd<br />
+								bl KeyboardPoll<br />
+						</div>
+						Now we get the new keys. </li>
+					<li>
+						<div class="armCodeBlock">
+							<p>
+								teq r0,#0<br />
+								bne getKeyboard$<br />
+								<br />
+								return$:<br />
+								pop {r4,r5,pc}<br />
+								.unreq kbd<br />
+						</div>
+						Finally we check if KeyboardPoll worked. If not, we probably disconnected. </li>
+				</ol>
+				<p>
+					With our new KeyboardUpdate method, checking for inputs becomes as simple as calling
+					this method at regular intervals, and it will even check for disconnections etc.
+					This is a useful method to have, as our actual key processing may differ based on
+					the situation, and so being able to get the current input in its raw form with one
+					method call is generally applicable. The next method we ideally want is KeyboardGetChar,
+					a method that simply returns the next key pressed as an ASCII character, or returns
+					0 if no key has just been pressed. This could be extended to support typing a key
+					multiple times if it is held for a certain duration, and to support the 'lock' keys
+					as well as modifiers.</p>
+				<p>
+					To make this method it is useful if we have a method KeyWasDown, which simply returns
+					0 if a given scan code is not in the KeyboardOldDown values, and returns a non-zero
+					value otherwise. Have a go at implementing this yourself. As always, a solution
+					can be found on the downloads page.</p>
+				<h2 id="lut">
+					7 Look Up Tables</h2>
+				<div class="informationBox">
+					<p>
+						In many areas of programming, the larger the program, the faster it is. Look up
+						tables are large, but are very fast. Some problems can be solved by a mixture of
+						look up tables and normal functions.</p>
+				</div>
+				<p>
+					The KeyboardGetChar method could be quite complex if we write it poorly. There are
+					100s of scan codes, each with different effects depending on the presence or absence
+					of the shift key or other modifiers. Not all of the keys can be translated to a
+					character. For some characters, multiple keys can produce the same character. A
+					useful trick in situations with such vast arrays of possibilities is look up tables.
+					A look up table, much like in the physical sense, is a table of values and their
+					results. For some limited functions, the simplest way to deduce the answer is just
+					to precompute every answer, and just return the correct one by retrieving it. In
+					this case, we could build up a sequence of values in memory such that the nth value
+					into the sequence is the ASCII character code for the scan code n. This means our
+					method would simply have to detect if a key was pressed, and then retrieve its value
+					from the table. Further, we could have a separate table for the values when shift
+					is held, so that the shift key simply changes which table we're working with.</p>
+				<p>
+					After the <span class="armCodeInline">.section .data</span> command, copy the following
+					tables:</p>
+				<div class="armCodeBlock">
+					<p>
+						.align 3<br />
+						KeysNormal:
+						<div class="indent">
+							<p>
+								.byte 0x0, 0x0, 0x0, 0x0, 'a', 'b', 'c', 'd'<br />
+								.byte 'e', 'f', 'g', 'h', 'i', 'j', 'k', 'l'<br />
+								.byte 'm', 'n', 'o', 'p', 'q', 'r', 's', 't'<br />
+								.byte 'u', 'v', 'w', 'x', 'y', 'z', '1', '2'<br />
+								.byte '3', '4', '5', '6', '7', '8', '9', '0'<br />
+								.byte '\n', 0x0, '\b', '\t', ' ', '-', '=', '['<br />
+								.byte ']', '\\', '#', ';', '\'', '`', ',', '.'<br />
+								.byte '/', 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0<br />
+								.byte 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0<br />
+								.byte 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0<br />
+								.byte 0x0, 0x0, 0x0, 0x0, '/', '*', '-', '+'<br />
+								.byte '\n', '1', '2', '3', '4', '5', '6', '7'<br />
+								.byte '8', '9', '0', '.', '\\', 0x0, 0x0, '='<br />
+						</div>
+						<p>
+							<br />
+							.align 3<br />
+							KeysShift:
+							<div class="indent">
+								<p>
+									.byte 0x0, 0x0, 0x0, 0x0, 'A', 'B', 'C', 'D'<br />
+									.byte 'E', 'F', 'G', 'H', 'I', 'J', 'K', 'L'<br />
+									.byte 'M', 'N', 'O', 'P', 'Q', 'R', 'S', 'T'<br />
+									.byte 'U', 'V', 'W', 'X', 'Y', 'Z', '!', '"'<br />
+									.byte '£', '$', '%', '^', '&', '*', '(', ')'<br />
+									.byte '\n', 0x0, '\b', '\t', ' ', '_', '+', '{'<br />
+									.byte '}', '|', '~', ':', '@', '¬', '&lt;', '&gt;'<br />
+									.byte '?', 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0<br />
+									.byte 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0<br />
+									.byte 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0<br />
+									.byte 0x0, 0x0, 0x0, 0x0, '/', '*', '-', '+'<br />
+									.byte '\n', '1', '2', '3', '4', '5', '6', '7'<br />
+									.byte '8', '9', '0', '.', '|', 0x0, 0x0, '='<br />
+							</div>
+				</div>
+				<div class="commandBox">
+					<p>
+						<span class="armCodeInline">.byte num</span> inserts the byte constant <span class="armCodeInline">
+							num</span> into the file directly.
+					</p>
+				</div>
+				<div class="informationBox">
+					<p>
+						Most assemblers and compilers recognise escape sequences; character sequences such
+						as \t which insert special characters instead.
+					</p>
+				</div>
+				<p>
+					These tables map directly the first 104 scan codes onto the ASCII characters as
+					a table of bytes. We also have a separate table describing the effects of the shift
+					key on those scan codes. I've used the ASCII null character (0) for all keys without
+					direct mappings in ASCII (such as the function keys). Backspace is mapped to the
+					ASCII backspace character (8 denoted \b), enter is mapped to the ASCII new line
+					character (10 denoted \n) and tab is mapped to the ASCII horizontal tab character
+					(9 denoted \t).
+				</p>
+				<p>
+					The KeyboardGetChar method will need to do the following:</p>
+				<ol>
+					<li>Check if KeyboardAddress is 0. If so, return 0.</li>
+					<li>Call KeyboardGetKeyDown up to 6 times. Each time:
+						<ol>
+							<li>If key is 0, exit loop.</li>
+							<li>Call KeyWasDown. If it was, go to the next key.</li>
+							<li>If the scan code is more than 103, go to the next key.</li>
+							<li>Call KeyboardGetModifiers</li>
+							<li>If shift is held, load the address of KeysShift. Otherwise load KeysNormal.</li>
+							<li>Read the ASCII value from the table.</li>
+							<li>If it is 0, go to the next key otherwise return this ASCII code and exit.</li>
+						</ol>
+					</li>
+					<li>Return 0.</li>
+				</ol>
+				<p>
+					Try to implement this yourself. My implementation is presented below:</p>
+				<ol>
+					<li>
+						<div class="armCodeBlock">
+							<p>
+								.globl KeyboardGetChar<br />
+								KeyboardGetChar:<br />
+								ldr r0,=KeyboardAddress<br />
+								ldr r1,[r0]<br />
+								teq r1,#0<br />
+								moveq r0,#0<br />
+								moveq pc,lr<br />
+							</p>
+						</div>
+						<p>
+							Simple check to see if we have a keyboard.</p>
+					</li>
+					<li>
+						<div class="armCodeBlock">
+							<p>
+								push {r4,r5,r6,lr}<br />
+								kbd .req r4<br />
+								key .req r6<br />
+								mov r4,r1<br />
+								mov r5,#0<br />
+								keyLoop$:</p>
+							<div class="indent">
+								<p>
+									mov r0,kbd<br />
+									mov r1,r5<br />
+									bl KeyboardGetKeyDown
+								</p>
+							</div>
+						</div>
+						<p>
+							r5 will hold the index of the key, r4 holds the keyboard address.</p>
+						<ol>
+							<li>
+								<div class="armCodeBlock">
+									<p>
+										teq r0,#0<br />
+										beq keyLoopBreak$<br />
+									</p>
+								</div>
+								<p>
+									If a scan code is 0, it either means there is an error, or there are no more keys.</p>
+							</li>
+							<li>
+								<div class="armCodeBlock">
+									<p>
+										mov key,r0<br />
+										bl KeyWasDown<br />
+										teq r0,#0<br />
+										bne keyLoopContinue$<br />
+									</p>
+								</div>
+								<p>
+									If a key was already down it is uninteresting, we only want ot know about key presses.</p>
+							</li>
+							<li>
+								<div class="armCodeBlock">
+									<p>
+										cmp key,#104<br />
+										bge keyLoopContinue$<br />
+									</p>
+								</div>
+								<p>
+									If a key has a scan code higher than 104, it will be outside our table, and so is
+									not relevant.</p>
+							</li>
+							<li>
+								<div class="armCodeBlock">
+									<p>
+										mov r0,kbd<br />
+										bl KeyboardGetModifiers<br />
+									</p>
+								</div>
+								<p>
+									We need to know about the modifier keys in order to deduce the character.</p>
+							</li>
+							<li>
+								<div class="armCodeBlock">
+									<p>
+										tst r0,#0b00100010<br />
+										ldreq r0,=KeysNormal<br />
+										ldrne r0,=KeysShift<br />
+									</p>
+								</div>
+								<p>
+									We detect both a left and right shift key as changing the characters to their shift
+									variants. Remember, a <span class="armCodeInline">tst</span> instruction computes
+									the logical AND and then compares it to zero, so it will be equal to 0 if and only
+									if both of the shift bits are zero.</p>
+							</li>
+							<li>
+								<div class="armCodeBlock">
+									<p>
+										ldrb r0,[r0,key]<br />
+									</p>
+								</div>
+								<p>
+									Now we can load in the key from the look up table.</p>
+							</li>
+							<li>
+								<div class="armCodeBlock">
+									<p>
+										teq r0,#0<br />
+										bne keyboardGetCharReturn$<br />
+										keyLoopContinue$:<br />
+										add r5,#1<br />
+										cmp r5,#6<br />
+										blt keyLoop$<br />
+									</p>
+								</div>
+								<p>
+									If the look up code contains a zero, we must continue. To continue, we increment
+									the index, and check if we've reached 6.</p>
+							</li>
+						</ol>
+					</li>
+					<li>
+						<div class="armCodeBlock">
+							keyLoopBreak$:<br />
+							mov r0,#0<br />
+							keyboardGetCharReturn$:<br />
+							pop {r4,r5,r6,pc}<br />
+							.unreq kbd<br />
+							.unreq key<br />
+						</div>
+						<p>
+							We return our key here, if we reach keyLoopBreak$, then we know there is no key
+							held, so return 0.</p>
+					</li>
+				</ol>
+				<h2 id="notepad">
+					8 Notepad OS</h2>
+				<p>
+					Now we have our KeyboardGetChar method, we can make an operating system that just
+					types what the user writes to the screen. For simplicity we'll ignore all the unusual
+					keys. In 'main.s' delete all code after <span class="armCodeInline">bl SetGraphicsAddress</span>.
+					Call UsbInitialise, set r4 and r5 to 0, then loop forever over the following commands:</p>
+				<ol>
+					<li>Call KeyboardUpdate</li>
+					<li>Call KeyboardGetChar</li>
+					<li>If it is 0, got to 1</li>
+					<li>Copy r4 and r5 to r1 and r2 then call DrawCharacter</li>
+					<li>Add r0 to r4</li>
+					<li>If r4 is 1024, add r1 to r5 and set r4 to 0</li>
+					<li>If r5 is 768 set r5 to 0</li>
+					<li>Go to 1</li>
+				</ol>
+				<p>
+					Now compile this and test it on the Pi. You should almost immediately be able to
+					start typing text to the screen when the Pi starts. If not, please see our troubleshooting
+					page.</p>
+				<p>
+					When it works, congratulations, you've achieved an interface with the computer.
+					You should now begin to realise that you've almost got a primitive operating system
+					together. You can now interface with the computer, issuing it commands, and receive
+					feedback on screen. In the next tutorial, <a href="input02.html">Input02</a> we
+					will look at producing a full text terminal, in which the user types commands, and
+					the computer executes them.</p>
+			</div>
+			<div id="pageFooter">
+			<hr />
+			<p><a rel="license" href="http://creativecommons.org/licenses/by-sa/3.0/deed.en_GB"><img alt="Creative Commons Licence" style="border-width:0" src="http://i.creativecommons.org/l/by-sa/3.0/88x31.png" /></a><br /><span xmlns:dct="http://purl.org/dc/terms/" property="dct:title">Baking Pi: Operating Systems Development</span> by <span xmlns:cc="http://creativecommons.org/ns#" property="cc:attributionName">Alex Chadwick</span> is licensed under a <a rel="license" href="http://creativecommons.org/licenses/by-sa/3.0/deed.en_GB">Creative Commons Attribution-ShareAlike 3.0 Unported License</a>.</p>
+			</div>
+		</div>
+	</div>
+</body>
+</html>

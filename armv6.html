@@ -1,0 +1,139 @@
+﻿<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml">
+<head>
+	<title>ARM Reference</title>
+	<link href="stylesheet.css" rel="Stylesheet" type="text/css" />
+	<script language="javascript" type="text/javascript" src="script.js"></script>
+</head>
+<body>
+	<div id="contentAll">
+		<div id="courseHead">
+			<h1>
+				ARM Reference</h1>
+		</div>
+		<div id="pageAll">
+			<div id="pageBody">
+				<p>
+					This page contains a reference for the ARMv6 instruction set, register set, and
+					also the GNU Assembler program syntax.</p>
+				<div class="ucampas-toc">
+				</div>
+				<h2 id="tutorial">
+					1 Tutorial ARM Instructions</h2>
+				<p>
+					The following is a list of all the instruction boxes in the courses in order.</p>
+				<div class="armList">
+					<p>
+						<span class="armCodeInline">ldr reg,=val</span> puts the number <span class="armCodeInline">
+							val</span> into the register named <span class="armCodeInline">reg</span>.</p>
+					<p>
+						<span class="armCodeInline">mov reg,#val</span> puts the number <span class="armCodeInline">
+							val</span> into the register named <span class="armCodeInline">reg</span>.</p>
+					<p>
+						<span class="armCodeInline">lsl reg,#val</span> shifts the binary representation
+						of the number in <span class="armCodeInline">reg</span> by <span class="armCodeInline">
+							val</span> places to the left.</p>
+					<p>
+						<span class="armCodeInline">str reg,[dest,#val]</span> stores the number in <span
+							class="armCodeInline">reg</span> at the address given by <span class="armCodeInline">
+								dest</span> + <span class="armCodeInline">val</span>.</p>
+					<p>
+						<span class="armCodeInline">name:</span> labels the next line <span class="armCodeInline">
+							name</span>.</p>
+					<p>
+						<span class="armCodeInline">b label</span> causes the next line to be executed to
+						be <span class="armCodeInline">label</span>.</p>
+					<p>
+						<span class="armCodeInline">sub reg,#val</span> subtracts the number <span class="armCodeInline">
+							val</span> from the value in <span class="armCodeInline">reg</span>.</p>
+					<p>
+						<span class="armCodeInline">cmp reg,#val</span> compares the value in <span class="armCodeInline">
+							reg</span> with the number <span class="armCodeInline">val</span>.</p>
+					<p>
+						Suffix <span class="armCodeInline">ne</span> causes the command to be executed only
+						if the last comparison determined that the numbers were not equal.</p>
+					<p>
+						<span class="armCodeInline">.globl lbl</span> makes the label <span class="armCodeInline">
+							lbl </span>accessible from other files.</p>
+					<p>
+						<span class="armCodeInline">mov reg1,reg2</span> copies the value in <span class="armCodeInline">
+							reg2</span> into <span class="armCodeInline">reg1</span>.</p>
+					<p>
+						Suffix <span class="armCodeInline">ls</span> causes the command to be executed only
+						if the last comparison determined that the first number was less than or the same
+						as the second. Unsigned.</p>
+					<p>
+						Suffix <span class="armCodeInline">hi</span> causes the command to be executed only
+						if the last comparison determined that the first number was higher than the second.
+						Unsigned.</p>
+					<p>
+						<span class="armCodeInline">push {reg1,reg2,...}</span> copies the registers in
+						the list <span class="armCodeInline">reg1,reg2,...</span> onto the top of the stack.
+						Only general purpose registers and lr can be pushed.</p>
+					<p>
+						<span class="armCodeInline">bl lbl</span> sets <span class="armCodeInline">lr</span>
+						to the address of the next instruction and then branches to the label <span class="armCodeInline">
+							lbl</span>.</p>
+					<p>
+						<span class="armCodeInline">add reg,#val</span> adds the number <span class="armCodeInline">
+							val</span> to the contents of the register <span class="armCodeInline">reg</span>.</p>
+					<p>
+						Argument shift <span class="armCodeInline">reg,lsl #val</span> shifts the binary
+						representation of the number in <span class="armCodeInline">reg</span> left by <span
+							class="armCodeInline">val</span> before using it in the operation before.</p>
+					<p>
+						<span class="armCodeInline">lsl reg,amt</span> shifts the binary representation
+						of the number in <span class="armCodeInline">reg</span> left by the number in <span
+							class="armCodeInline">amt</span>.</p>
+					<p>
+						<span class="armCodeInline">str reg,[dst]</span> is the same as <span class="armCodeInline">
+							str reg,[dst,#0]</span>.</p>
+					<p>
+						<span class="armCodeInline">pop {reg1,reg2,...}</span> copies the values from the
+						top of the stack into the register list <span class="armCodeInline">reg1,reg2,...</span>.
+						Only general purpose registers and pc can be popped.</p>
+					<p>
+						<span class="armCodeInline">alias .req reg</span> sets <span class="armCodeInline">alias</span>
+						to mean the register <span class="armCodeInline">reg</span>.</p>
+					<p>
+						<span class="armCodeInline">.unreq alias</span> removes the alias <span class="armCodeInline">
+							alias</span>.</p>
+					<p>
+						<span class="armCodeInline">lsr dst,src,#val</span> shifts the binary representation
+						of the number in <span class="armCodeInline">src</span> right by <span class="armCodeInline">
+							val</span>, but stores the result in <span class="armCodeInline">dst</span>.</p>
+					<p>
+						<span class="armCodeInline">and reg,#val</span> computes the Boolean and function
+						of the number in <span class="armCodeInline">reg</span> with <span class="armCodeInline">
+							val</span>.</p>
+					<p>
+						<span class="armCodeInline">teq reg,#val</span> checks if the number in <span class="armCodeInline">
+							reg</span> is equal to <span class="armCodeInline">val</span>.</p>
+					<p>
+						<span class="armCodeInline">ldrd regLow,regHigh,[src,#val]</span> loads 8 bytes
+						from the address given by the number in <span class="armCodeInline">src</span> plus
+						<span class="armCodeInline">val</span> into <span class="armCodeInline">regLow</span>
+						and <span class="armCodeInline">regHigh</span>.</p>
+					<p>
+						<span class="armCodeInline">.align num</span> ensures the address of the next line
+						is a multiple of 2<span class="armCodeInline"><sup>num</sup></span>.</p>
+					<p>
+						<span class="armCodeInline">.int val</span> outputs the number <span class="armCodeInline">
+							val</span>.</p>
+					<p>
+						<span class="armCodeInline">tst reg,#val</span> computes <span class="armCodeInline">
+							and reg,#val</span> and compares the result with 0.</p>
+					<p>
+						<span class="armCodeInline">strh reg,[dest]</span> stores the low half word number
+						in <span class="armCodeInline">reg</span> at the address given by <span class="armCodeInline">
+							dest</span>.</p>
+				</div>
+			</div>
+		</div>
+		<div id="pageFooter">
+			<hr />
+			<p><a rel="license" href="http://creativecommons.org/licenses/by-sa/3.0/deed.en_GB"><img alt="Creative Commons Licence" style="border-width:0" src="http://i.creativecommons.org/l/by-sa/3.0/88x31.png" /></a><br /><span xmlns:dct="http://purl.org/dc/terms/" property="dct:title">Baking Pi: Operating Systems Development</span> by <span xmlns:cc="http://creativecommons.org/ns#" property="cc:attributionName">Alex Chadwick</span> is licensed under a <a rel="license" href="http://creativecommons.org/licenses/by-sa/3.0/deed.en_GB">Creative Commons Attribution-ShareAlike 3.0 Unported License</a>.</p>
+		</div>
+	</div>
+</body>
+</html>

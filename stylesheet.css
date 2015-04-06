@@ -1,0 +1,254 @@
+﻿#courseHead
+{
+}
+
+#pageAll
+{
+	margin-right: 10em;
+}
+
+#pageNavigation ol
+{
+	list-style-type: none;
+	padding-left: 1em;
+}
+
+.noteLink
+{
+	text-decoration: none;
+}
+
+.noteBackLink
+{
+	text-decoration: none;
+}
+
+.armCodeBlock
+{
+	font-family: Monospace;
+	padding: 0.5em;
+	border-width: medium;
+	border-color: #999999;
+	border-style:solid;
+	background-color: #CCCCCC;
+	max-width: 40em;
+}
+
+.armCodeBlock p
+{
+	margin-top: 0em;
+	margin-bottom: 0em;
+}
+
+.armCodeBlock .comment
+{
+	color: Green;
+}
+
+.pseudoCodeBlock
+{
+	font-family: Monospace;
+	padding: 0.5em;
+	border-width: medium;
+	border-color: #999999;
+	border-style:solid;
+	background-color: #CCCCCC;
+	max-width: 40em;
+}
+
+.pseudoCodeBlock p
+{
+	margin-top: 0em;
+	margin-bottom: 0em;
+}
+
+.pseudoCodeInline
+{
+	font-family: Monospace;
+}
+
+.pseudoCodeBlock .comment
+{
+	color: Green;
+}
+
+.pseudoCodeBlock .keyword
+{
+	color: Blue;
+}
+
+.indent
+{
+	padding-left: 2em;
+}
+
+.armCodeInline
+{
+	font-family: Monospace;
+	font-weight: bold;
+}
+
+.shellCodeInline
+{
+	font-family: Monospace;
+	font-weight: bold;
+}
+
+.informationBox
+{
+	clear: right;
+	float: right;
+	background: #c7fee1;
+	border: 3px solid #b5e7cc;
+	margin-left: 0.5em;
+	margin-top: 0.5em;
+	margin-bottom: 0.5em;
+	margin-right: -10em;
+	max-width: 8em;
+	padding: 0.5em;
+}
+
+.informationBox p
+{
+	margin-top: 0em;
+	margin-bottom: 0em;
+}
+
+.cellBlue
+{
+	background-color: #AAAAFF;
+}
+
+.cellBlack
+{
+	background-color: Black;
+	color: White;
+}
+
+.cellWhite
+{
+	background-color: White;
+	color: Black;
+}
+
+.monoCellTable td
+{
+	font-family: Monospace;
+	text-align: center;
+}
+
+.sideMono
+{
+	clear: right;
+	float: right;
+	font-size: smaller;
+	margin-right: -10em;
+	border-style: outset;
+	border-width: medium;
+}
+.sideMono td
+{
+	text-align: center;
+	padding: 0.1em;
+	width: 1.5em;
+	height: 1.5em;
+}
+
+.commandBox
+{
+	clear: right;
+	float: right;
+	background: #f3dcf1;
+	border: 3px solid #d4c0d2;
+	margin-left: 0.5em;
+	margin-top: 0.5em;
+	margin-bottom: 0.5em;
+	margin-right: -10em;
+	max-width: 8em;
+	padding: 0.5em;
+}
+
+.commandBox p
+{
+	margin-top: 0em;
+	margin-bottom: 0em;
+}
+
+.equation
+{
+	font-family: Serif;
+	text-align: center;
+}
+
+.equationInline
+{
+	font-family: Serif;
+}
+
+.expandable
+{
+	background: #f3dcf1;
+	display:none;
+	padding: 15px;
+	margin-bottom: 0.5em;
+}
+
+.expandableHeader
+{
+	background: #f3dcf1;
+	border: 1px solid #d4c0d2;
+	padding: 0.5em 0.5em 0em 0.5em;
+	margin-bottom: 0.5em;
+	cursor: pointer;
+}
+
+.sideDiagram
+{
+	clear: right;
+	float: right;
+	margin-left: 0.5em;
+	margin-top: 0.5em;
+	margin-bottom: 0.5em;
+}
+
+.marginDiagram
+{
+	clear: right;
+	float: right;
+	margin-left: 0.5em;
+	margin-top: 0.5em;
+	margin-bottom: 0.5em;
+	margin-right: -10em;
+}
+
+.tableTopCells td
+{
+	vertical-align: middle;
+}
+
+td
+{
+	padding: 0.5em;
+}
+
+#pageFooter
+{
+	margin-bottom: 20%;
+}
+
+#pageFooter ol
+{
+	list-style-type: none;
+	padding-left: 1em;
+}
+
+.armList
+{
+	text-indent: -3em;
+	margin-left: 3em;
+}
+
+.highlightRow1
+{
+	background: #cccccc;
+}
