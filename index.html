@@ -54,15 +54,103 @@
 				<h2 id="requirements">
 					1 Requirements</h2>
 				<p>
-					In order to complete this course you will need a Raspberry Pi with an SD card and
-					power supply, as well as another computer running a version of Linux, Microsoft
-					Windows or Mac OS X, capable of writing to the SD card, and installing software.
-					It is helpful, but not necessary, for your Raspberry Pi to be able to be connected
-					to a screen.</p>
+				<h3 id="hardware">
+					1.1 Hardware</h3>
 				<p>
-					In terms of software, you require a GNU compiler toolchain that targets ARMv6. Links
-					for downloads are available on the <a href="downloads.html">Downloads Page</a>, along
-					with model answers for all of the exercises.</p>
+					In order to complete this course you will need a Raspberry Pi with an SD card and
+					power supply. It is helpful, but not necessary, for your Raspberry Pi to be able to
+					be connected to a screen and keyboard.
+
+					In addition to the Raspberry Pi used to test and run your operating system code, you
+					also need a seperate computer running Linux, Microsoft Windows or Mac OS X capable of
+					writing to the type of SD card used by your Raspberry Pi.
+
+					This other computer is your development and support system.</p>
+				<h3 id="software">
+					1.2 Software</h3>
+				<p>
+					In terms of software, you require a GNU compiler toolchain that targets ARMv6 processors.
+
+					You will install or build a set of tools, called a cross-compiler, on your development
+					system.
+					
+					This cross-compiler converts your source code files into Raspberry Pi-compatible
+					executable files which are placed on the SD card. The SD card is then transferred to
+					the Raspberry Pi where the executable can be tested.
+					
+					You can download a pre-built toolchain from the <a href="downloads.html">Downloads Page</a>,
+					along with model answers for all of the exercises.</p>
+				<h3 id="binutils">
+					1.3 Your Own Toolchain: binutils</h3>
+				<p>
+					Linux users may with to build their own cross-compiler toolchain. This will require
+					downloading and building the binutils and gcc packages from GNU.
+
+					The binutils package contains the basic tools for building executables, including the
+					assembler, the linker, a disassembler, and tools to manipulate object and binary files.
+
+					These two packages are built separately but should be installed into the same destination
+					directory.
+					
+					Make an area in your home directory to build your development kit.</p>
+				<pre class="pseudoCodeBlock">cd
+mkdir devkit
+mkdir devkit-build
+cd devkit-build</pre>
+				<p>
+				Download the binutils-X.XX.tar.bz2 package from <a href="http://www.gnu.org/software/binutils">GNU binutils</a>
+				into the devkit-build directory and uncompress it with the <em>tar jxv binutils-X.XX.tar.bz2</em> command.
+
+				Replace the X.XX with the current version number, such as 2.24 or 2.25 which have both been used
+				successfully for this course.
+
+				A note about make commands: if your development system has multiple processors or cores, you can
+				use then to build and compile in parallel by adding <em>-j #cores</em>
+
+				A note about the <em>--program-prefix</em> option: the trailing dash (-) is necessary to make sure the
+				command names match helper templates used later in the course.
+
+				Build the tools with these steps, replacing X.XX with your specific binutils version number:</p>
+				<pre class="pseudoCodeBlock">cd $HOME/devkit-build
+mkdir binutils-build
+cd binutils-build
+../binutils-X.XX/configure --prefix=$HOME/devkit/ --program-prefix=arm-none-eabi- --target=arm-none-eabi --disable-nls
+make
+make check
+make install
+cd ..</pre>
+				<h3 id="gcc">
+					1.4 Your Own Toolchain: gcc</h3>
+				<p>
+				The gcc package contains a C compiler used in later parts of the course.
+
+				Download the gcc-X.XX.tar.bz2 package from <a href="https://gcc.gnu.org/">GCC, The GNU Compiler Collection</a>
+				into the devkit-build directory and uncompress it with the <em>tar jxv gcc-X.XX.tar.bz2</em> command.
+				
+				Replace the X.XX with the current version number, such as 4.8.2 or 5.1 which have both been used
+				successfully for this course.
+
+				Build the tools with these steps, replacing X.XX with your specific gcc version number, and add the -j #cores option, if desired</p>
+				<pre class="pseudoCodeBlock">cd $HOME/devkit-build
+mkdir gcc-build
+cd gcc-build
+../gcc-X.XX/configure --prefix=$HOME/devkit/ --program-prefix=arm-none-eabi- --target=arm-none-eabi --disable-nls --without-headers --with-newlib --with-as=$HOME/devkit/bin/arm-none-eabi-as --with-ld=$HOME/devkit/bin/arm-none-eabi-ld --enable-languages=c
+make all-gcc
+make check all-gcc
+make install-gcc
+make all-target-libgcc
+make check all-target-libgcc
+make install-target-libgcc
+cd ..</pre>
+				<h3 id="finishing">
+					1.5 Finishing Up</h3>
+				<p>
+				Now that you have a custom cross-compiler in your $HOME/devkit directory, you will need to add this
+				directory to your shell's PATH environment variable to be able to run the tools later in the course.
+
+				Each time you are ready to use the toolchain, run the following shell command:</p>
+				<pre class="pseudoCodeBlock">export PATH=$PATH:$HOME/devkit/bin</pre>
+				
 				<h2 id="lessons">
 					2 Lessons</h2>
 				<table>
