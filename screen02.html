@@ -137,6 +137,12 @@
 							add addr, px,lsl #1<br />
 							.unreq px<br />
 						</div>
+						<div class="commandBox"><p>
+							<span class="armCodeInline">mla dst,reg1,reg2,reg3</span> multiplies the values
+							from <span class="armCodeInline">reg1</span> and <span class="armCodeInline">reg2</span>,
+							adds the value from <span class="armCodeInline">reg3</span> and places
+							the least significant 32 bits of the result in
+							<span class="armCodeInline">dst</span>.</p></div>
 						<p>
 							Admittedly, this code is specific to high colour frame buffers, as I use a bit shift
 							directly to compute this address. You may wish to code a version of this function
