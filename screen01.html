@@ -698,23 +698,23 @@
 					</li>
 					<li>
 						<div class="armCodeBlock"><p>
-							fbInfoAddr .req r4<br />
-							push {r4,lr}<br />
+							fbInfoAddr .req r3<br />
+							push {lr}<br />
 							ldr fbInfoAddr,=FrameBufferInfo<br />
-							str width,[r4,#0]<br />
-							str height,[r4,#4]<br />
-							str width,[r4,#8]<br />
-							str height,[r4,#12]<br />
-							str bitDepth,[r4,#20]<br />
+							str width,[fbInfoAddr,#0]<br />
+							str height,[fbInfoAddr,#4]<br />
+							str width,[fbInfoAddr,#8]<br />
+							str height,[fbInfoAddr,#12]<br />
+							str bitDepth,[fbInfoAddr,#20]<br />
 							.unreq width<br />
 							.unreq height<br />
 							.unreq bitDepth<br />
 						</div>
 						<p>
 							This code simply writes into our frame buffer structure defined above. I also take
-							the opportunity to push <span class="armCodeInline">r4</span> and the link register
-							onto the stack, as we will need to store the frame buffer address in <span class="armCodeInline">
-								r4</span>.</p>
+							the opportunity to push the link register
+							onto the stack.
+						</p>
 					</li>
 					<li>
 						<div class="armCodeBlock"><p>
@@ -741,7 +741,7 @@
 						<div class="armCodeBlock"><p>
 							teq result,#0<br />
 							movne result,#0<br />
-							popne {r4,pc}<br />
+							popne {pc}<br />
 						</div>
 						<p>
 							This code checks if the result of the MailboxRead method is 0, and returns 0 if
@@ -750,7 +750,7 @@
 					<li>
 						<div class="armCodeBlock"><p>
 							mov result,fbInfoAddr<br />
-							pop {r4,pc}<br />
+							pop {pc}<br />
 							.unreq result<br />
 							.unreq fbInfoAddr<br />
 						</div>
