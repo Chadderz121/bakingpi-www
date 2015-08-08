@@ -13,12 +13,6 @@
 		</div>
 		<div id="pageAll">
 			<div id="pageBody">
-				<p style="color: red; font-weight: bold;">
-					This course has not yet been updated to work with the Raspberry Pi models B+
-					and A+. Some elements may not work, in particular the first few lessons about the
-					LED. It has also not been updated for Raspberry Pi v2.
-				</p>
-				<p>
 					Welcome to Baking Pi: Operating Systems Development! Course by <a href="mailto:awc32@cam.ac.uk">Alex Chadwick</a>.</p>
 				<div class="informationBox"><p>
 					You can now help contribute to this tutorial on <a href="https://github.com/chadderz121/bakingpi-www">GitHub</a>.</div>
@@ -56,25 +50,58 @@
 				<p>
 				<h3 id="hardware">
 					1.1 Hardware</h3>
+				<div class="informationBox"><p>
+					This course has not yet been fully updated to work with the Raspberry Pi model 1 A+, model 1 B+
+					, model 2 B, or Compute module. See the  <a href="https://github.com/chadderz121/bakingpi-www">GitHub</a>
+					"Issues" page for early notes and details for these newer platforms.</div>
 				<p>
-					In order to complete this course you will need a Raspberry Pi with an SD card and
+					In order to complete this course you will need a Raspberry Pi model 1 A or model 1B with an SD card and
 					power supply. It is helpful, but not necessary, for your Raspberry Pi to be able to
 					be connected to a screen and keyboard.</p>
 				<p>
-					In addition to the Raspberry Pi used to test and run your operating system code, you
-					also need a seperate computer running Linux, Microsoft Windows or Mac OS X capable of
-					writing to the type of SD card used by your Raspberry Pi.
-					This other computer is your development and support system.</p>
+					In addition to the "testing" Raspberry Pi used to test and run your operating system code, you
+					also need a seperate development and support computer to write and assemble the operating system
+					binaries on. There are three possibilities for a development system: Minimal, Second PC, and Pi-to-Pi.</p>
+				<p>
+					<b>Minimal</b>: The same Raspberry Pi you will use as the test system. For this type of development system you
+					only need a second SD card with the Raspbian Linux OS, and a USB to SD card writer. You will boot
+					your Pi with Raspbian SD card and the SD card writer attached to USB. Create your OS in Raspbian and write
+					it to a second bare metal SDcard in the USB writer. Then power down, switch your Pi to boot from the bare metal
+					OS SD card for testing. Then you would shut down again, switch back to the Raspbian Linux SD card
+					to debug or continue development. This can be slow and painful, but does allow you to complete the
+					course with the minimum of hardware and software.</P>
+				<p>	
+					<b>Second PC</b>: This configuration uses a second development computer running Linux, Microsoft Windows, or
+					Mac OS X capable of writing to the type of SD card used by your Raspberry Pi. You create your bare
+					metal OS on the development computer, write it to the SD card in the development computer, then move
+					the SD card to the Pi for testing. With a second PC, just moving the SD card is more convenient than
+					reconfiguring a single Pi over and over to be development, then test, then development again.</p>
+				<p>
+				<div class="informationBox"><p>Your Pi-to-Pi development system can be a Raspberry Pi 2B.</div>
+
+					<b>Pi-to-Pi</b>: By far, the most convenient way to do rapid bare-metal OS development and testing is to
+					directly connect two Raspberry Pi computers using a custom serial cable. This configuration takes
+					the most work to setup, initially, but makes the development and test cycle almost effortless. For
+					this configuration, you will need the bootloader05 bare metal OS from
+					<a href="https://github.com/dwelch67/raspberrypi/">David Welch's Raspberri Pi github repository</a>
+					and to follow his excellent Pi-to-Pi serial cable construction and use documentation at
+					<a href="https://github.com/dwelch67/raspberrypi/tree/master/pitopi">David Welch's Pi to Pi github page</a></p>
+
 				<h3 id="software">
 					1.2 Software</h3>
 				<p>
 					In terms of software, you require a GNU compiler toolchain that targets ARMv6 processors.
-					You will install or build a set of tools, called a cross-compiler, on your development
-					system. This cross-compiler converts your source code files into Raspberry Pi-compatible
-					executable files which are placed on the SD card. The SD card is then transferred to
-					the Raspberry Pi where the executable can be tested.</p>
+					If you use the Minimal or Pi-to-Pi development environments, you will simply install the
+					binutils and gcc development tool packages into your Raspbian Linux using the apt-get install
+					command while connected to the Internet.</p>
 				<p>
-					You can find instruction for getting the toolchain on the
+					If you use the Second PC development system configuration, you will install or build a set
+					of tools, called a cross-compiler, on your development system. This cross-compiler converts
+					your source code files into Raspberry Pi-compatible executable files which are placed on
+					the bare metal SD card. The bare metal SD card is then transferred to the Raspberry Pi where
+					the executable can be tested.</p>
+				<p>
+					You can find instruction for getting and building the cross-compiler toolchain on the
 					<a href="downloads.html">Downloads Page</a>, along with model answers for all of the
 					exercises.</p>
 				<h2 id="lessons">
