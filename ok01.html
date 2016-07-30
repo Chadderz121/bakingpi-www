@@ -84,12 +84,18 @@ Makefile</pre>
 					Copy the following instruction.</p>
 				<div class="armCodeBlock"><p>
 					ldr r0,=0x20200000
+				</p>
+				<p>
+					For the Raspberry Pi 2b the peripheral base register has changed.<br>
+					Copy the following instruction for that model.</p>
+				<div class="armCodeBlock"><p>
+					ldr r0,=0x3f200000
 				</p></div>
 				<div class="commandBox"><p>
 					<span class="armCodeInline">ldr reg,=val</span> puts the number <span class="armCodeInline">
 						val</span> into the register named <span class="armCodeInline">reg</span>.</p></div>
 				<p>
-					That is our first command. It tells the processor to store the number 0x20200000
+					That is our first command. It tells the processor to store the number 0x20200000 respectively 0x3f200000
 					into the register r0. I shall need to answer two questions here, what is a register,
 					and how is 0x20200000 a number?</p>
 				<div class="informationBox"><p>
@@ -204,6 +210,13 @@ Makefile</pre>
 					mov r1,#1<br />
 					lsl r1,#18<br />
 					str r1,[r0,#4]<br />
+				</p>
+				<p>
+					For the Raspberry Pi Model 2b there are again slight changes.</p>
+				<div class="armCodeBlock"><p>
+					mov r1,#1<br />
+					lsl r1,#21<br />
+					str r1,[r0,#16]<br />
 				</p></div>
 				<div class="commandBox"><p>
 					<span class="armCodeInline">mov reg,#val</span> puts the number <span class="armCodeInline">
@@ -222,8 +235,8 @@ Makefile</pre>
 					just trying to get a value into r1, we could use another <span class="armCodeInline">
 						ldr</span> command as before, but it will be useful to us later to be able to
 					set any given GPIO pin, so it is better to deduce the value from a formula than
-					write it straight in. The OK LED is wired to the 16th GPIO pin, and so we need to
-					send a command to enable the 16th pin.</p>
+					write it straight in. The OK LED is wired to the 16th GPIO pin or respectively the 47thGPIO pin for the RP 2b, and so we need to
+					send a command to enable the 16th/47th pin.</p>
 				<p>
 					The value in r1 is needed to enable the LED pin. The first line puts the number
 					1<sub>10</sub> into r1. The <span class="armCodeInline">mov</span> command is faster
@@ -309,7 +322,11 @@ Makefile</pre>
 					which is 24 bytes in total. Within each 4 byte section, every 3 bits relates to
 					a particular GPIO pin. Since we want the 16th GPIO pin, we need the second set of
 					4 bytes because we're dealing with pins 10-19, and we need the 6th set of 3 bits,
-					which is where the number 18 (6&times;3) comes from in the code above.</p>
+					which is where the number 18 (6&times;3) comes from in the code above.<br><br>
+					For the RP 2b respectively we need the following:<br>
+					We want the 47th GPIO pin. Therefore we need the fourth set of 4 bytes (Pins 40-49), 
+					starting at  #16. And we need the 7th set of 3 bits, where the number 21 comes from 
+					(7&times;3).</p>
 				<p>
 					Finally the <span class="armCodeInline">str</span> 'store register' command stores
 					the value in the first argument, <span class="armCodeInline">r1</span> into the
@@ -334,7 +351,16 @@ Makefile</pre>
 					mov r1,#1<br />
 					lsl r1,#16<br />
 					str r1,[r0,#40]<br />
-				</p></div>
+				</p>
+				<p>
+					For the Raspberry Pi 2b things change again slightly.
+					This time we need to turn pin 47 on and NOT off.</p>
+					<div class="armCodeBlock"><p>
+					mov r1,#1<br />
+					lsl r1,#15<br />
+					str r1,[r0,#32]<br />
+				</p>
+				</div>
 				<p>
 					Hopefully you should recognise all of the above commands, if not their values. The
 					first puts a 1 into <span class="armCodeInline">r1</span> as before. The second
@@ -342,7 +368,11 @@ Makefile</pre>
 					pin 16 off, we need to have a 1 in the 16th bit of this next message (other values
 					would work for other pins). Finally we write it out to the address which is 40<sub>10</sub>
 					added to the GPIO controller address, which happens to be the address to write to
-					turn a pin off (28 would turn the pin on).</p>
+					turn a pin off (28 would turn the pin on).<br><br>
+					For the RP 2b we have to shift the 1 left by 15 since this is the result of modulus 47 of 32.
+					Furthermore we need write it out to the adress which is 32<sub>10</sub>
+					added to the GPIO controller address, which is address to write to
+					turn a pin on for a RP 2b.</p>
 				<h2 id="happy">
 					6 Happily Ever After</h2>
 				<p>
