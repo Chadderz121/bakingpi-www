@@ -651,7 +651,7 @@
 					The GPIO controller has two sets of 4 bytes each for turning pins on and off. The
 					first set in each case controls the first 32 pins, and the second set controls the
 					remaining 22. In order to determine which set it is in, we need to divide the pin
-					number by 32. Fortunately this is very easy, at is the same as shifting the binary
+					number by 32. Fortunately this is very easy, at it is the same as shifting the binary
 					representation of the pin number right by 5 places. Hence, in this case I've named
 					<span class="armCodeInline">r3</span> as <span class="armCodeInline">pinBank</span>
 					and then computed <span class="armCodeInline">pinNum</span> &divide; 32. Since it
@@ -662,7 +662,7 @@
 					rounded away when we did &divide; 32 which may not be if we just &divide; 8.</p>
 				<p>
 					The result of this is that <span class="armCodeInline">gpioAddr</span> now contains
-					either 20200000<sub>16</sub> if the pin number is 0-31, and 20200004<sub>16</sub>
+					either 20200000<sub>16</sub> if the pin number is 0-31, or 20200004<sub>16</sub>
 					if the pin number is 32-53. This means if we add 28<sub>10</sub> we get the address
 					for turning the pin on, and if we add 40<sub>10</sub> we get the address for turning
 					the pin off. Since we are done with <span class="armCodeInline">pinBank</span>,
@@ -719,7 +719,7 @@
 					and on otherwise. <span class="armCodeInline">teq</span> (test equal) is another
 					comparison operation that can only be used to test for equality. It is similar to
 					cmp but it does not work out which number is bigger. If all you wish to do is test
-					if to numbers are the same, you can use <span class="armCodeInline">teq</span>.
+					if two numbers are the same, you can use <span class="armCodeInline">teq</span>.
 				</p>
 				<p>
 					If <span class="armCodeInline">pinVal</span> is zero, we store the <span class="armCodeInline">
